@@ -316,6 +316,10 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
             initVideoEffect(group, videoEffect);
             resetIfInvalid(videoEffect);
         }
+        if (hfr != null) {
+            filterUnsupportedOptions(group,
+                    hfr, mParameters.getSupportedVideoHighFrameRateModes());
+        }
     }
 
     private void buildExposureCompensation(

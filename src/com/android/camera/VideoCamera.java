@@ -98,6 +98,7 @@ public class VideoCamera extends ActivityBase
                     CameraSettings.KEY_AUDIO_ENCODER,
                     CameraSettings.KEY_VIDEO_DURATION,
                     CameraSettings.KEY_COLOR_EFFECT,
+		    CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE
         };
     public HashMap otherSettingKeys = new HashMap(2);
 
@@ -341,6 +342,8 @@ public class VideoCamera extends ActivityBase
 
     private int mVideoEncoder;
     private int mAudioEncoder;
+    private boolean mUnsupportedHFRVideoSize = false;
+    private boolean mUnsupportedHFRVideoCodec = false;
     // This Handler is used to post message back onto the main thread of the
     // application
     private class MainHandler extends Handler {
@@ -1284,6 +1287,9 @@ public class VideoCamera extends ActivityBase
         if (!mCaptureTimeLapse) {
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
         }
+        String hfr = mParameters.getVideoHighFrameRate();
+        if(("off".equals(hfr)))
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
         mProfile.audioCodec = mAudioEncoder;
@@ -1638,6 +1644,22 @@ public class VideoCamera extends ActivityBase
             return;
         }
 
+        if( mUnsupportedHFRVideoSize == true) {
+            Log.v(TAG, "Unsupported HFR and video size combinations");
+            Toast.makeText(VideoCamera.this, R.string.error_app_unsupported_hfr,
+            Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if( mUnsupportedHFRVideoCodec == true) {
+            Log.v(TAG, "Unsupported HFR and video codec combinations");
+            Toast.makeText(VideoCamera.this, R.string.error_app_unsupported_hfr_codec,
+            Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+
+
         if (effectsActive()) {
             initializeEffectsRecording();
             if (mEffectsRecorder == null) {
@@ -1961,9 +1983,40 @@ public class VideoCamera extends ActivityBase
 
     private void setCameraParameters() {
         mParameters = mCameraDevice.getParameters();
+        int videoWidth, videoHeight;
 
         mParameters.setPreviewSize(mDesiredPreviewWidth, mDesiredPreviewHeight);
         mParameters.setPreviewFrameRate(mProfile.videoFrameRate);
+
+	videoWidth = mProfile.videoFrameWidth;
+        videoHeight = mProfile.videoFrameHeight;
+
+
+        mUnsupportedHFRVideoSize = false;
+        mUnsupportedHFRVideoCodec = false;
+        // Set High Frame Rate.
+        String HighFrameRate = mPreferences.getString(
+                CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
+                getString(R.string.pref_camera_hfr_default));
+        if(!("off".equals(HighFrameRate))){
+            if ( !((videoWidth == 640 && videoHeight == 480) ||
+                   (videoWidth == 800 && videoHeight == 480))) {
+                mUnsupportedHFRVideoSize = true;
+            } else {
+                if (isSupported(HighFrameRate,
+                    mParameters.getSupportedVideoHighFrameRateModes())) {
+                    mParameters.setVideoHighFrameRate(HighFrameRate);
+                }
+            }
+            if(mVideoEncoder != MediaRecorder.VideoEncoder.H264){
+                mUnsupportedHFRVideoCodec = true;
+            }
+        } else {
+            if (isSupported(HighFrameRate,
+                mParameters.getSupportedVideoHighFrameRateModes())) {
+                mParameters.setVideoHighFrameRate(HighFrameRate);
+            }
+        }
 
         // Set flash mode.
         String flashMode = mPreferences.getString(
