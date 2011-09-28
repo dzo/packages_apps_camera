@@ -81,6 +81,7 @@ public abstract class BaseCamera extends NoSearchActivity
             mParameters.setColorEffect(colorEffect);
         }
 
+/*
         // Set sharpness parameter.
         if (mParameters.getMaxSharpness() > 0) {
             String sharpness = mPreferences.getString(CameraSettings.KEY_SHARPNESS,
@@ -101,6 +102,7 @@ public abstract class BaseCamera extends NoSearchActivity
                     String.valueOf(mParameters.getDefaultSaturation()));
             mParameters.setSaturation(Integer.valueOf(saturation));
         }
+*/
     }
 
     protected void setWhiteBalance() {
@@ -133,10 +135,10 @@ public abstract class BaseCamera extends NoSearchActivity
 
     protected boolean powerShutter(SharedPreferences prefs) {
         if (prefs.getBoolean("power_shutter_enabled", false)){
-            getWindow().addFlags(WindowManager.LayoutParams.PREVENT_POWER_KEY);
+//            getWindow().addFlags(WindowManager.LayoutParams.PREVENT_POWER_KEY);
             return true;
         }else{
-            getWindow().clearFlags(WindowManager.LayoutParams.PREVENT_POWER_KEY);
+//            getWindow().clearFlags(WindowManager.LayoutParams.PREVENT_POWER_KEY);
             return false;
         }
     }

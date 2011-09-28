@@ -200,7 +200,7 @@ public class VideoCamera extends BaseCamera
     private boolean mZoomSupported = false;
 
     // Last quality enum, defined in frameworks mediaprofile
-    private int mMaxCamcorderQuality = CamcorderProfile.QUALITY_WIDE;
+    private int mMaxCamcorderQuality = CamcorderProfile.QUALITY_HD;
 
     // This Handler is used to post message back onto the main thread of the
     // application
@@ -648,11 +648,11 @@ public class VideoCamera extends BaseCamera
             videoQuality = CamcorderProfile.QUALITY_HIGH;
         }
 
-        if (videoQuality == CamcorderProfile.QUALITY_WIDE &&
+/*        if (videoQuality == CamcorderProfile.QUALITY_WIDE &&
                 !getResources().getBoolean(R.bool.supportsWideProfile)) {
             videoQuality = CamcorderProfile.QUALITY_HIGH;
         }
-
+*/
         // Set video duration limit. The limit is read from the preference,
         // unless it is specified in the intent.
         if (intent.hasExtra(MediaStore.EXTRA_DURATION_LIMIT)) {
@@ -1625,7 +1625,7 @@ public class VideoCamera extends BaseCamera
         CameraSettings.dumpParameters(mParameters);
         if (mMediaRecorder != null) {
             Log.d(TAG, "*** SET PARAMS VIA MEDIARECORDER!");
-            mMediaRecorder.setCameraParameters(mParameters.flatten());
+  //          mMediaRecorder.setCameraParameters(mParameters.flatten());
         } else {
             mCameraDevice.setParameters(mParameters);
         }

@@ -265,6 +265,7 @@ public class CameraSettings {
         }
         if (exposure != null) buildExposureCompensation(group, exposure);
         if (cameraId != null) buildCameraId(group, cameraId);
+/*
         if (iso != null) {
             filterUnsupportedOptions(group,
                     iso, mParameters.getSupportedIsoValues());
@@ -281,6 +282,7 @@ public class CameraSettings {
              filterUnsupportedOptions(group,
                      autoExposure, mParameters.getSupportedAutoexposure());
          }
+*/
     }
 
     private boolean checkTouchFocus() {
@@ -528,8 +530,8 @@ public class CameraSettings {
         final int q;
         if (VIDEO_QUALITY_YOUTUBE_HD.equals(quality) || VIDEO_QUALITY_HD.equals(quality)) {
             q = CamcorderProfile.QUALITY_HD;
-        } else if (VIDEO_QUALITY_WIDE.equals(quality)) {
-            q = CamcorderProfile.QUALITY_WIDE;
+  //      } else if (VIDEO_QUALITY_WIDE.equals(quality)) {
+  //          q = CamcorderProfile.QUALITY_WIDE;
         } else if (VIDEO_QUALITY_YOUTUBE.equals(quality) || VIDEO_QUALITY_HIGH.equals(quality)) {
             q = CamcorderProfile.QUALITY_HIGH;
         } else {

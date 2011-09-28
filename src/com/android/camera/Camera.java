@@ -2037,7 +2037,7 @@ public class Camera extends BaseCamera implements View.OnClickListener,
 
         // For the following settings, we need to check if the settings are
         // still supported by latest driver, if not, ignore the settings.
-
+/*
          // Set ISO parameter.
         String iso = mPreferences.getString(
                 CameraSettings.KEY_ISO,
@@ -2064,7 +2064,7 @@ public class Camera extends BaseCamera implements View.OnClickListener,
              mParameters.setAutoExposure(autoExposure);
          }
 
-
+*/
          // Set anti banding parameter.
          String antiBanding = mPreferences.getString(
                  CameraSettings.KEY_ANTIBANDING,

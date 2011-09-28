@@ -64,6 +64,7 @@ public class SettingsIndicator extends AbstractIndicator {
         mParameters = params;
         mPreferences = ComboPreferences.get(context);
 
+/*
         setupSlider(mContrastValues, params.getMaxContrast(), params.getDefaultContrast(),
                 CameraSettings.KEY_CONTRAST, mPreferences);
 
@@ -72,6 +73,7 @@ public class SettingsIndicator extends AbstractIndicator {
 
         setupSlider(mSaturationValues, params.getMaxSaturation(), params.getDefaultSaturation(),
                 CameraSettings.KEY_SATURATION, mPreferences);
+*/
     }
 
     @Override
@@ -124,7 +126,7 @@ public class SettingsIndicator extends AbstractIndicator {
 
         mPopupContent = new LinearLayout();
         mPopupContent.setOrientation(LinearLayout.HORIZONTAL);
-
+/*
         addSlider(mContrastController, mContrastValues,
                 String.valueOf(mParameters.getDefaultContrast()),
                 R.string.pref_camera_contrast_title, CameraSettings.KEY_CONTRAST);
@@ -136,7 +138,7 @@ public class SettingsIndicator extends AbstractIndicator {
         addSlider(mSharpnessController, mSharpnessValues,
                 String.valueOf(mParameters.getDefaultSharpness()),
                 R.string.pref_camera_sharpness_title, CameraSettings.KEY_SHARPNESS);
-
+*/
         return mPopupContent;
     }
 
@@ -154,12 +156,14 @@ public class SettingsIndicator extends AbstractIndicator {
 
     @Override
     public void reloadPreferences() {
+/*
         setSliderValue(mContrastController, mContrastValues,
                 String.valueOf(mParameters.getDefaultContrast()));
         setSliderValue(mSaturationController, mSaturationValues,
                 String.valueOf(mParameters.getDefaultSaturation()));
         setSliderValue(mSharpnessController, mSharpnessValues,
                 String.valueOf(mParameters.getDefaultSharpness()));
+*/
     }
 
     private void setSliderValue(final SettingsController controller, final List<String> values,
