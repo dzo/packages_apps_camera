@@ -2148,6 +2148,7 @@ public class Camera extends BaseCamera implements View.OnClickListener,
 
         } else {
             mFocusMode = mParameters.getFocusMode();
+            mCaptureMode = getString(R.string.pref_camera_capturemode_entry_default);
         }
     }
 
