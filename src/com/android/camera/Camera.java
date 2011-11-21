@@ -87,6 +87,28 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private static final String TAG = "camera";
 
+    private static final String[] OTHER_SETTING_KEYS = {
+            CameraSettings.KEY_RECORD_LOCATION,
+            CameraSettings.KEY_FOCUS_MODE,
+            //CameraSettings.KEY_EXPOSURE,
+            //CameraSettings.KEY_SCENE_DETECT,
+            //CameraSettings.KEY_SKIN_TONE_ENHANCEMENT,
+            CameraSettings.KEY_PICTURE_SIZE,
+            CameraSettings.KEY_JPEG_QUALITY,
+            CameraSettings.KEY_ISO,
+            CameraSettings.KEY_LENSSHADING,
+            //CameraSettings.KEY_MEMORY_COLOR_ENHANCEMENT,
+            //CameraSettings.KEY_AUTOEXPOSURE,
+            CameraSettings.KEY_ANTIBANDING,
+            //CameraSettings.KEY_TOUCH_AF_AEC,
+            //CameraSettings.KEY_SELECTABLE_ZONE_AF,
+            //CameraSettings.KEY_FACE_DETECTION,
+            CameraSettings.KEY_PICTURE_FORMAT,
+            CameraSettings.KEY_COLOR_EFFECT,
+            //CameraSettings.KEY_HISTOGRAM,
+            CameraSettings.KEY_SATURATION,
+            CameraSettings.KEY_CONTRAST,
+            CameraSettings.KEY_SHARPNESS};
     private static final int CROP_MSG = 1;
     private static final int FIRST_TIME_INIT = 2;
     private static final int CLEAR_SCREEN_DELAY = 3;
@@ -160,6 +182,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private Rotatable mReviewCancelButton;
     private Rotatable mReviewDoneButton;
 
+    // Constant from android.hardware.Camera.Parameters
+    private static final String KEY_PICTURE_FORMAT = "picture-format";
+    private static final String PIXEL_FORMAT_JPEG = "jpeg";
+    private static final String PIXEL_FORMAT_RAW = "raw";
+
     // mCropValue and mSaveUri are used only if isImageCaptureIntent() is true.
     private String mCropValue;
     private Uri mSaveUri;
@@ -212,6 +239,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private ContentResolver mContentResolver;
     private boolean mDidRegister = false;
+
+    private static final int MAX_SHARPNESS_LEVEL = 6;
 
     private LocationManager mLocationManager;
 
@@ -1159,10 +1188,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 CameraSettings.KEY_WHITE_BALANCE,
                 CameraSettings.KEY_EXPOSURE,
                 CameraSettings.KEY_SCENE_MODE};
-        final String[] OTHER_SETTING_KEYS = {
-                CameraSettings.KEY_RECORD_LOCATION,
-                CameraSettings.KEY_PICTURE_SIZE,
-                CameraSettings.KEY_FOCUS_MODE};
 
         CameraPicker.setImageResourceId(R.drawable.ic_switch_photo_facing_holo_light);
         mIndicatorControlContainer.initialize(this, mPreferenceGroup,
@@ -1948,6 +1973,162 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         // For the following settings, we need to check if the settings are
         // still supported by latest driver, if not, ignore the settings.
 
+         // Set ISO parameter.
+        
+        String iso = mPreferences.getString(
+                CameraSettings.KEY_ISO,
+                getString(R.string.pref_camera_iso_default));
+        if (isSupported(iso,
+                mParameters.getSupportedIsoValues())) {
+                mParameters.setISOValue(iso);
+         }
+
+        //Set LensShading
+        /*String lensshade = mPreferences.getString(
+                CameraSettings.KEY_LENSSHADING,
+                getString(R.string.pref_camera_lensshading_default));
+        if (isSupported(lensshade,
+                mParameters.getSupportedLensShadeModes())) {
+                mParameters.setLensShade(lensshade);
+        }
+
+        //Set Memory Color Enhancement
+        String mce = mPreferences.getString(
+                CameraSettings.KEY_MEMORY_COLOR_ENHANCEMENT,
+                getString(R.string.pref_camera_mce_default));
+        if (isSupported(mce,
+                mParameters.getSupportedMemColorEnhanceModes())) {
+                mParameters.setMemColorEnhance(mce);
+        }
+
+        //Set Histogram
+        String histogram = mPreferences.getString(
+                CameraSettings.KEY_HISTOGRAM,
+                getString(R.string.pref_camera_histogram_default));
+        if (isSupported(histogram,
+                mParameters.getSupportedHistogramModes()) && mCameraDevice != null) {
+                // Call for histogram
+                if(histogram.equals("enable")) {
+                    if(mGraphView != null) {
+                        mGraphView.setVisibility(View.VISIBLE);
+                    }
+                    mCameraDevice.setHistogramMode(mStatsCallback);
+                    mHiston = true;
+
+                } else {
+                    mHiston = false;
+                    if(mGraphView != null)
+                        mGraphView.setVisibility(View.INVISIBLE);
+                     mCameraDevice.setHistogramMode(null);
+                }
+        }
+        //Set Brightness.
+        mParameters.set("luma-adaptation", String.valueOf(mbrightness));
+*/
+         // Set auto exposure parameter.
+         String autoExposure = mPreferences.getString(
+                 CameraSettings.KEY_AUTOEXPOSURE,
+                 getString(R.string.pref_camera_autoexposure_default));
+         if (isSupported(autoExposure, mParameters.getSupportedAutoexposure())) {
+             mParameters.setAutoExposure(autoExposure);
+         }
+
+        /*// Set Touch AF/AEC parameter.
+        String touchAfAec = mPreferences.getString(
+                 CameraSettings.KEY_TOUCH_AF_AEC,
+                 getString(R.string.pref_camera_touchafaec_default));
+         if (isSupported(touchAfAec, mParameters.getSupportedTouchAfAec())) {
+             if (touchAfAec.equals(Parameters.TOUCH_AF_AEC_ON)) {
+                 if (mFocusGestureDetector == null) {
+                     mFocusGestureDetector = new GestureDetector(this, new FocusGestureListener(), mHandler);
+
+                     //Setting the touch index to negative value to
+                     //indicate that a touch event has not occured yet
+                     mParameters.setTouchIndexAec(-1,-1);
+                     mParameters.setTouchIndexAf(-1,-1);
+                     mParameters.set("touchAfAec-dx",String.valueOf(100));
+                     mParameters.set("touchAfAec-dy",String.valueOf(100));
+                 }
+             }
+             else {
+                 if (mFocusRectangle != null)
+                     mFocusRectangle.clear();
+                 mFocusGestureDetector = null;
+             }
+             mParameters.setTouchAfAec(touchAfAec);
+         }
+
+         // Set Selectable Zone Af parameter.
+         String selectableZoneAf = mPreferences.getString(
+             CameraSettings.KEY_SELECTABLE_ZONE_AF,
+             getString(R.string.pref_camera_selectablezoneaf_default));
+         List<String> str = mParameters.getSupportedSelectableZoneAf();
+         if (isSupported(selectableZoneAf, mParameters.getSupportedSelectableZoneAf())) {
+             mParameters.setSelectableZoneAf(selectableZoneAf);
+         }
+
+         // Set face detetction parameter.
+         String faceDetection = mPreferences.getString(
+             CameraSettings.KEY_FACE_DETECTION,
+             getString(R.string.pref_camera_facedetection_default));
+
+         if (isSupported(faceDetection, mParameters.getSupportedFaceDetectionModes())) {
+             mParameters.setFaceDetectionMode(faceDetection);
+             if(faceDetection.equals(Parameters.FACE_DETECTION_ON)) {
+                 mCameraDevice.setFaceDetectionCb(mMetaDataCallback);
+                 mFaceDetect = FACE_DETECTION_ON; 
+             } else {
+                 mCameraDevice.setFaceDetectionCb(null);
+                 clearFaceRectangles();
+                 mFaceDetect = FACE_DETECTION_OFF;
+             }
+         }
+*/
+        // Set sharpness parameter.
+        String sharpnessStr = mPreferences.getString(
+                CameraSettings.KEY_SHARPNESS,
+                getString(R.string.pref_camera_sharpness_default));
+        int sharpness = Integer.parseInt(sharpnessStr) *
+                (mParameters.getMaxSharpness()/MAX_SHARPNESS_LEVEL);
+        if((0 <= sharpness) &&
+                (sharpness <= mParameters.getMaxSharpness()))
+            mParameters.setSharpness(sharpness);
+
+
+        // Set contrast parameter.
+        String contrastStr = mPreferences.getString(
+                CameraSettings.KEY_CONTRAST,
+                getString(R.string.pref_camera_contrast_default));
+        int contrast = Integer.parseInt(contrastStr);
+        if((0 <= contrast) &&
+                (contrast <= mParameters.getMaxContrast()))
+            mParameters.setContrast(contrast);
+
+
+
+         // Set anti banding parameter.
+         String antiBanding = mPreferences.getString(
+                 CameraSettings.KEY_ANTIBANDING,
+                 getString(R.string.pref_camera_antibanding_default));
+         if (isSupported(antiBanding, mParameters.getSupportedAntibanding())) {
+             mParameters.setAntibanding(antiBanding);
+         }
+
+        // For the following settings, we need to check if the settings are
+        // still supported by latest driver, if not, ignore the settings.
+
+
+
+        // Set color effect parameter.
+        String colorEffect = mPreferences.getString(
+                CameraSettings.KEY_COLOR_EFFECT,
+                getString(R.string.pref_camera_coloreffect_default));
+        Log.e(TAG, "<DEBUG> Default colorEffect is " + colorEffect);
+        if (isSupported(colorEffect, mParameters.getSupportedColorEffects())) {
+            Log.e(TAG, "<DEBUG> Set colorEffect ");
+            mParameters.setColorEffect(colorEffect);
+        }
+
         // Set exposure compensation
         int value = CameraSettings.readExposure(mPreferences);
         int max = mParameters.getMaxExposureCompensation();
@@ -1957,6 +2138,15 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         } else {
             Log.w(TAG, "invalid exposure range: " + value);
         }
+
+        // Set Picture Format
+        // Picture Formats specified in UI should be consistent with
+        // PIXEL_FORMAT_JPEG and PIXEL_FORMAT_RAW constants
+        String pictureFormat = mPreferences.getString(
+                CameraSettings.KEY_PICTURE_FORMAT,
+                getString(R.string.pref_camera_picture_format_default));
+        Log.v(TAG, "Setting picture format in app: punits");
+        mParameters.set(KEY_PICTURE_FORMAT, pictureFormat);
 
         if (Parameters.SCENE_MODE_AUTO.equals(mSceneMode)) {
             // Set flash mode.

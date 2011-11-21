@@ -37,6 +37,12 @@
             camera:singleIcon="@drawable/ic_viewfinder_scene_mode"
             camera:entries="@array/pref_camera_scenemode_entries"
             camera:entryValues="@array/pref_camera_scenemode_entryvalues" />
+        <ListPreference
+                camera:key="pref_camera_scenedetect_key"
+                camera:defaultValue="@string/pref_camera_scenedetect_default"
+                camera:title="@string/pref_camera_scenedetect_title"
+                camera:entries="@array/pref_camera_scenedetect_entries"
+                camera:entryValues="@array/pref_camera_scenedetect_entryvalues" />
     <IconListPreference
             camera:key="pref_camera_whitebalance_key"
             camera:defaultValue="@string/pref_camera_whitebalance_default"
@@ -45,6 +51,12 @@
             camera:largeIcons="@array/whitebalance_largeicons"
             camera:entries="@array/pref_camera_whitebalance_entries"
             camera:entryValues="@array/pref_camera_whitebalance_entryvalues" />
+        <ListPreference
+                camera:key="pref_camera_coloreffect_key"
+                camera:defaultValue="@string/pref_camera_coloreffect_default"
+                camera:title="@string/pref_camera_coloreffect_title"
+                camera:entries="@array/pref_camera_coloreffect_entries"
+                camera:entryValues="@array/pref_camera_coloreffect_entryvalues" />
     <RecordLocationPreference
             camera:key="pref_camera_recordlocation_key"
             camera:defaultValue="@string/pref_camera_recordlocation_default"
@@ -58,6 +70,12 @@
             camera:title="@string/pref_camera_picturesize_title"
             camera:entries="@array/pref_camera_picturesize_entries"
             camera:entryValues="@array/pref_camera_picturesize_entryvalues" />
+        <ListPreference
+                camera:key="pref_camera_jpegquality_key"
+                camera:defaultValue="@string/pref_camera_jpegquality_default"
+                camera:title="@string/pref_camera_jpegquality_title"
+                camera:entries="@array/pref_camera_jpegquality_entries"
+                camera:entryValues="@array/pref_camera_jpegquality_entryvalues" />
     <ListPreference
             camera:key="pref_camera_focusmode_key"
             camera:defaultValue="@string/pref_camera_focusmode_default"
@@ -71,4 +89,46 @@
             camera:icons="@array/camera_id_icons"
             camera:entries="@array/camera_id_entries"
             camera:largeIcons="@array/camera_id_largeicons" />
+ 	<ListPreference
+                camera:key="pref_camera_touchafaec_key"
+                camera:defaultValue="@string/pref_camera_touchafaec_default"
+                camera:title="@string/pref_camera_touchafaec_title"
+                camera:entries="@array/pref_camera_touchafaec_entries"
+                camera:entryValues="@array/pref_camera_touchafaec_entryvalues" />
+        <ListPreference
+                camera:key="pref_camera_iso_key"
+                camera:defaultValue="@string/pref_camera_iso_default"
+                camera:title="@string/pref_camera_iso_title"
+                camera:entries="@array/pref_camera_iso_entries"
+                camera:entryValues="@array/pref_camera_iso_entryvalues" />
+         <ListPreference
+                camera:key="pref_camera_antibanding_key"
+                camera:defaultValue="@string/pref_camera_antibanding_default"
+                camera:title="@string/pref_camera_antibanding_title"
+                camera:entries="@array/pref_camera_antibanding_entries"
+                camera:entryValues="@array/pref_camera_antibanding_entryvalues" />
+         <ListPreference
+                camera:key="pref_camera_pictureformat_key"
+                camera:defaultValue="@string/pref_camera_picture_format_default"
+                camera:title="@string/pref_camera_picture_format_title"
+                camera:entries="@array/pref_camera_picture_format_entries"
+                camera:entryValues="@array/pref_camera_picture_format_entryvalues" />
+         <ListPreference
+                camera:key="pref_camera_sharpness_key"
+                camera:defaultValue="@string/pref_camera_sharpness_default"
+                camera:title="@string/pref_camera_sharpness_title"
+                camera:entries="@array/pref_camera_sharpness_entries"
+                camera:entryValues="@array/pref_camera_multilevel_sharpness_entryvalues"/>
+        <ListPreference
+                camera:key="pref_camera_contrast_key"
+                camera:defaultValue="@string/pref_camera_contrast_default"
+                camera:title="@string/pref_camera_contrast_title"
+                camera:entries="@array/pref_camera_contrast_entries"
+                camera:entryValues="@array/pref_camera_multilevel_entryvalues" />
+        <ListPreference
+                camera:key="pref_camera_saturation_key"
+                camera:defaultValue="@string/pref_camera_saturation_default"
+                camera:title="@string/pref_camera_saturation_title"
+                camera:entries="@array/pref_camera_saturation_entries"
+                camera:entryValues="@array/pref_camera_multilevel_entryvalues" />
 </PreferenceGroup>

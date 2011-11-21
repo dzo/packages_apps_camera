@@ -138,6 +138,7 @@
     <string name="pref_camera_picturesize_title">Picture size</string>
 
     <!-- Settings screen, Picture size dialog radio button choices -->
+    <!-- Settings screen, Picture size dialog radio button choices -->
     <string name="pref_camera_picturesize_entry_4000x3000">12M Pixels</string>
     <string name="pref_camera_picturesize_entry_3200x2400">8M Pixels</string>
     <string name="pref_camera_picturesize_entry_2592x1936">5M Pixels</string>
@@ -146,6 +147,7 @@
     <string name="pref_camera_picturesize_entry_1600x1200">2M Pixels</string>
     <string name="pref_camera_picturesize_entry_1280x768">WXGA</string>
     <string name="pref_camera_picturesize_entry_1280x720">HD720</string>
+    <string name="pref_camera_picturesize_entry_1280x960">1.3M Pixels</string>
     <string name="pref_camera_picturesize_entry_1024x768">1M Pixels</string>
     <string name="pref_camera_picturesize_entry_800x600">SVGA</string>
     <string name="pref_camera_picturesize_entry_800x480">WVGA</string>
@@ -154,6 +156,36 @@
     <string name="pref_camera_picturesize_entry_320x240">QVGA</string>
     <string name="pref_camera_picturesize_entry_176x144">QCIF</string>
 
+    <!-- Default picture quality setting. See
+         pref_camera_jpegquality_entryvalues for possible values -->
+    <string name="pref_camera_jpegquality_default" translatable="false">superfine</string>
+
+    <!-- Default Picture format setting. Do not translate. -->
+    <string name="pref_camera_picture_format_default">jpeg</string>
+
+    <!-- Settings screen, Select Picture format title -->
+    <string name="pref_camera_picture_format_title">Select Picture Format</string>
+
+    <!-- Settings screen, picture format dialog radio button choices -->
+    <string name="pref_camera_picture_format_entry_jpeg">Jpeg</string>
+    <string name="pref_camera_picture_format_entry_raw">Raw</string>
+
+    <!-- Picture format entry values. Do not translate. -->
+    <string name="pref_camera_picture_format_value_jpeg">jpeg</string>
+    <string name="pref_camera_picture_format_value_raw">raw</string>
+    <!-- Settings screen, Picture quality title -->
+    <string name="pref_camera_jpegquality_title">Picture quality</string>
+
+    <!-- Settings screen, Picture quality dialog radio button choices -->
+    <string name="pref_camera_jpegquality_entry_superfine">Super fine</string>
+    <string name="pref_camera_jpegquality_entry_fine">Fine</string>
+    <string name="pref_camera_jpegquality_entry_normal">Normal</string>
+    <string name="pref_camera_jpegquality_entry_0">Jpeg 55%</string>
+    <string name="pref_camera_jpegquality_entry_1">Jpeg 65%</string>
+    <string name="pref_camera_jpegquality_entry_2">Jpeg 75%</string>
+    <string name="pref_camera_jpegquality_entry_3">Jpeg 85%</string>
+    <string name="pref_camera_jpegquality_entry_4">Jpeg 95%</string>
+    <string name="pref_camera_jpegquality_entry_5">Jpeg 100%</string>
     <!-- Default focus mode setting.-->
     <string name="pref_camera_focusmode_default" translatable="false">continuous-picture</string>
 
@@ -162,6 +194,7 @@
 
     <!-- Settings screen, Focue mode dialog radio button choices -->
     <string name="pref_camera_focusmode_entry_auto">Auto</string>
+    <string name="pref_camera_focusmode_entry_normal">Normal</string>
     <string name="pref_camera_focusmode_entry_infinity">Infinity</string>
     <string name="pref_camera_focusmode_entry_macro">Macro</string>
 
@@ -195,6 +228,94 @@
     <string name="pref_camera_whitebalance_entry_fluorescent">Fluorescent</string>
     <string name="pref_camera_whitebalance_entry_cloudy">Cloudy</string>
 
+    <!-- Default color effect setting. -->
+    <string name="pref_camera_coloreffect_default" translatable="false">none</string>
+
+    <!-- Settings screen, Select Color effect title -->
+    <string name="pref_camera_coloreffect_title">Color effect</string>
+
+    <!-- Settings screen, Color effect dialog radio button choices -->
+    <string name="pref_camera_coloreffect_entry_none">None</string>
+    <string name="pref_camera_coloreffect_entry_mono">Mono</string>
+    <string name="pref_camera_coloreffect_entry_sepia">Sepia</string>
+    <string name="pref_camera_coloreffect_entry_negative">Negative</string>
+    <!-- Color effect that overexposes and reverses some of the tones. -->
+    <string name="pref_camera_coloreffect_entry_solarize">Solarize</string>
+    <string name="pref_camera_coloreffect_entry_posterize">Posterize</string>
+    <string name="pref_camera_coloreffect_entry_aqua">Aqua</string>
+    <string name="pref_camera_coloreffect_entry_emboss">Emboss</string>
+    <string name="pref_camera_coloreffect_entry_sketch">Sketch</string>
+    <string name="pref_camera_coloreffect_entry_neon">Neon</string>
+    <string name="pref_camera_coloreffect_entry_pastel">Pastel</string>
+    <string name="pref_camera_coloreffect_entry_mosaic">Mosaic</string>
+    <string name="pref_camera_coloreffect_entry_redtint">Red tint</string>
+    <string name="pref_camera_coloreffect_entry_bluetint">Blue tint</string>
+    <string name="pref_camera_coloreffect_entry_greentint">Green tint</string>
+
+    <!-- Default Touch AF/AEC setting. Do not translate. -->
+    <string name="pref_camera_touchafaec_default">touch-off</string>
+
+    <!-- Settings screen, Select Touch AF/AEC title -->
+    <string name="pref_camera_touchafaec_title">Touch AF/AEC</string>
+
+    <!-- Settings screen, Touch AF/AEC dialog radio button choices -->
+    <string name="pref_camera_touchafaec_entry_off">Off</string>
+    <string name="pref_camera_touchafaec_entry_on">On</string>
+
+    <!-- Settings screen, Multiple levels entries -->
+    <string name="pref_camera_sharpness_entry_level0">Level 0</string>
+    <string name="pref_camera_sharpness_entry_level1">Level 1</string>
+    <string name="pref_camera_sharpness_entry_level2">Level 2(Default)</string>
+    <string name="pref_camera_sharpness_entry_level3">Level 3</string>
+    <string name="pref_camera_sharpness_entry_level4">Level 4</string>
+    <string name="pref_camera_sharpness_entry_level5">Level 5</string>
+    <string name="pref_camera_sharpness_entry_level6">Level 6</string>
+
+    <!-- Settings screen, Multiple levels entries -->
+    <string name="pref_camera_contrast_entry_level0">Level 0</string>
+    <string name="pref_camera_contrast_entry_level1">Level 1</string>
+    <string name="pref_camera_contrast_entry_level2">Level 2</string>
+    <string name="pref_camera_contrast_entry_level3">Level 3</string>
+    <string name="pref_camera_contrast_entry_level4">Level 4</string>
+    <string name="pref_camera_contrast_entry_level5">Level 5(Default)</string>
+    <string name="pref_camera_contrast_entry_level6">Level 6</string>
+    <string name="pref_camera_contrast_entry_level7">Level 7</string>
+    <string name="pref_camera_contrast_entry_level8">Level 8</string>
+    <string name="pref_camera_contrast_entry_level9">Level 9</string>
+    <string name="pref_camera_contrast_entry_level10">Level 10</string>
+
+
+    <!-- Settings screen, Multiple levels entries -->
+    <string name="pref_camera_saturation_entry_level0">Level 0</string>
+    <string name="pref_camera_saturation_entry_level1">Level 1</string>
+    <string name="pref_camera_saturation_entry_level2">Level 2</string>
+    <string name="pref_camera_saturation_entry_level3">Level 3</string>
+    <string name="pref_camera_saturation_entry_level4">Level 4</string>
+    <string name="pref_camera_saturation_entry_level5">Level 5(Default)</string>
+    <string name="pref_camera_saturation_entry_level6">Level 6</string>
+    <string name="pref_camera_saturation_entry_level7">Level 7</string>
+    <string name="pref_camera_saturation_entry_level8">Level 8</string>
+    <string name="pref_camera_saturation_entry_level9">Level 9</string>
+    <string name="pref_camera_saturation_entry_level10">Level 10</string>
+
+    <!-- Default sharpness setting. Do not translate. -->
+    <string name="pref_camera_sharpness_default">2</string>
+
+    <!-- Settings screen, Select sharpness title -->
+    <string name="pref_camera_sharpness_title">Sharpness</string>
+
+    <!-- Default contrast setting. Do not translate. -->
+    <string name="pref_camera_contrast_default">5</string>
+
+    <!-- Settings screen, Select contrast title -->
+    <string name="pref_camera_contrast_title">Contrast</string>
+
+    <!-- Default saturation setting. Do not translate. -->
+    <string name="pref_camera_saturation_default">5</string>
+
+    <!-- Settings screen, Select saturation title -->
+    <string name="pref_camera_saturation_title">Saturation</string>
+
     <!-- Default scene mode setting. -->
     <string name="pref_camera_scenemode_default" translatable="false">auto</string>
 
@@ -205,13 +326,50 @@
     <string name="pref_camera_scenemode_entry_auto">Auto</string>
     <!-- Scene mode that takes an image quickly with little motion blur. -->
     <string name="pref_camera_scenemode_entry_action">Action</string>
+    <!-- Scene mode that takes an image with as little noise as possible so details of the subject are maintained. -->
+    <string name="pref_camera_scenemode_entry_portrait">Portrait</string>
+    <!-- Scene mode that takes an image of a landscape assuming all subjects are relatively far from the phone. -->
+    <string name="pref_camera_scenemode_entry_landscape">Landscape</string>
     <!-- Scene mode that takes long exposures to capture night scenes without flash. -->
     <string name="pref_camera_scenemode_entry_night">Night</string>
+    <!-- Scene mode that takes night shots with long exposure and flash to illuminate the subject while still capturing darker detail in the background. -->
+    <string name="pref_camera_scenemode_entry_night_portrait">Night Portrait</string>
+    <!-- Scene mode to be used in a stage show. -->
+    <string name="pref_camera_scenemode_entry_theatre">Theatre</string>
+    <!-- Scene mode optimized for taking images on the beach. -->
+    <string name="pref_camera_scenemode_entry_beach">Beach</string>
+    <!-- Scene mode optimized for taking images in the snow. -->
+    <string name="pref_camera_scenemode_entry_snow">Snow</string>
     <!-- Scene mode optimized for taking images in the sunset. -->
     <string name="pref_camera_scenemode_entry_sunset">Sunset</string>
+    <!-- Scene mode for taking a photo as sharp as possible. -->
+    <string name="pref_camera_scenemode_entry_steadyphoto">Steady Photo</string>
+    <!-- Scene mode optimized for taking images of fireworks. -->
+    <string name="pref_camera_scenemode_entry_fireworks">Fireworks</string>
+    <!-- Scene mode optimized for taking images during sports . -->
+    <string name="pref_camera_scenemode_entry_sports">Sports</string>
     <!-- Scene mode optimized for taking indoor low-lights pictures. [CHAR LIMIT=16] -->
     <string name="pref_camera_scenemode_entry_party">Party</string>
+    <!-- Scene mode optimized for capturing the naturally warm color of scenes lit by candles. [CHAR LIMIT=16] -->
+    <string name="pref_camera_scenemode_entry_candlelight">Candlelight</string>
+    <!-- Scene mode for taking a photo with backlight. -->
+    <string name="pref_camera_scenemode_entry_backlight">Backlight</string>
+    <!-- Scene mode optimized for taking images of flowers. -->
+    <string name="pref_camera_scenemode_entry_flowers">Flowers</string>
+    <!-- Scene mode optimized for taking images of AR. -->
+    <string name="pref_camera_scenemode_entry_ar">AR</string>
 
+    <!-- Default auto scene detection setting. -->
+    <string name="pref_camera_scenedetect_default" translatable="false">off</string>
+
+    <!-- Settings screen, Select Auto Scene Detection -->
+    <string name="pref_camera_scenedetect_title">Auto Scene Detection</string>
+
+    <!-- Settings menu, auto scene detection choices -->
+    <string name="pref_camera_scenedetect_entry_off">Off</string>
+    <!-- Scene detection set to on - supports backlight and snow cloudy detection. -->
+    <string name="pref_camera_scenedetect_entry_on">On</string>
+    
     <!-- Toast after trying to select a setting that is not allowed to change in scene mode [CHAR LIMIT=NONE] -->
     <string name="not_selectable_in_scene_mode">This is not selectable in scene mode</string>
 
@@ -222,6 +380,46 @@
     <!-- Exposure settings in preference -->
     <string name="pref_exposure_title">Exposure</string>
     <string name="pref_exposure_default" translatable="false">0</string>
+
+     <!-- Default iso setting. Do not translate. -->
+     <string name="pref_camera_iso_default">auto</string>
+
+     <!-- Settings screen, Select Iso title -->
+     <string name="pref_camera_iso_title">Select ISO</string>
+
+     <!-- Settings screen, ISO dialog radio button choices -->
+     <string name="pref_camera_iso_entry_auto">Auto</string>
+     <string name="pref_camera_iso_entry_isodeblur">ISO Auto(HJR)</string>
+     <string name="pref_camera_iso_entry_iso100">ISO100</string>
+     <string name="pref_camera_iso_entry_iso200">ISO200</string>
+     <string name="pref_camera_iso_entry_iso400">ISO400</string>
+     <string name="pref_camera_iso_entry_iso800">ISO800</string>
+     <string name="pref_camera_iso_entry_iso1600">ISO1600</string>
+
+
+     <!-- ISO entry values. Do not translate. -->
+     <string name="pref_camera_iso_value_auto">auto</string>
+     <string name="pref_camera_iso_value_isodeblur">ISO_HJR</string>
+     <string name="pref_camera_iso_value_iso100">ISO100</string>
+     <string name="pref_camera_iso_value_iso200">ISO200</string>
+     <string name="pref_camera_iso_value_iso400">ISO400</string>
+     <string name="pref_camera_iso_value_iso800">ISO800</string>
+     <string name="pref_camera_iso_value_iso1600">ISO1600</string>
+
+     <!-- Settings screen, Anti Banding title -->
+     <string name="pref_camera_antibanding_title">Anti Banding</string>
+
+     <!-- Default Anti Banding setting. -->
+     <string name="pref_camera_antibanding_default">off</string>
+
+     <!-- Settings screen, Anti Banding entries -->
+     <string name="pref_camera_antibanding_entry_0">Off</string>
+     <string name="pref_camera_antibanding_entry_1">50 Hz</string>
+     <string name="pref_camera_antibanding_entry_2">60 Hz</string>
+     <string name="pref_camera_antibanding_entry_3">Auto</string>
+
+     <!-- Default auto exposure setting. Do not translate. -->
+    <string name="pref_camera_autoexposure_default">frame-average</string>
 
     <!-- Dialog "OK" button. Dismisses dialog. -->
     <string name="dialog_ok">OK</string>

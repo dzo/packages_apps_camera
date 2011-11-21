@@ -91,6 +91,7 @@
         <item>@string/pref_camera_picturesize_entry_2048x1536</item>
         <item>@string/pref_camera_picturesize_entry_1920x1080</item>
         <item>@string/pref_camera_picturesize_entry_1600x1200</item>
+	<item>@string/pref_camera_picturesize_entry_1280x960</item>
         <item>@string/pref_camera_picturesize_entry_1280x768</item>
         <item>@string/pref_camera_picturesize_entry_1280x720</item>
         <item>@string/pref_camera_picturesize_entry_1024x768</item>
@@ -114,6 +115,7 @@
         <item>2048x1536</item>
         <item>1920x1080</item>
         <item>1600x1200</item>
+	<item>1280x960</item>
         <item>1280x768</item>
         <item>1280x720</item>
         <item>1024x768</item>
@@ -125,15 +127,51 @@
         <item>176x144</item>
     </string-array>
 
+    <!-- Camera Preferences Picture format dialog box entries -->
+    <string-array name="pref_camera_picture_format_entries">
+        <item>@string/pref_camera_picture_format_entry_jpeg</item>
+        <item>@string/pref_camera_picture_format_entry_raw</item>
+    </string-array>
+    <string-array name="pref_camera_picture_format_entryvalues">
+        <item>@string/pref_camera_picture_format_value_jpeg</item>
+        <item>@string/pref_camera_picture_format_value_raw</item>
+    </string-array>
+
+    <!-- Camera Preferences JPEG quality dialog box entries -->
+    <string-array name="pref_camera_jpegquality_entries" translatable="false">
+        <item>@string/pref_camera_jpegquality_entry_0</item>
+        <item>@string/pref_camera_jpegquality_entry_1</item>
+        <item>@string/pref_camera_jpegquality_entry_2</item>
+        <item>@string/pref_camera_jpegquality_entry_3</item>
+        <item>@string/pref_camera_jpegquality_entry_4</item>
+        <item>@string/pref_camera_jpegquality_entry_5</item>
+        <item>@string/pref_camera_jpegquality_entry_superfine</item>
+        <item>@string/pref_camera_jpegquality_entry_fine</item>
+        <item>@string/pref_camera_jpegquality_entry_normal</item>
+    </string-array>
+
+    <string-array name="pref_camera_jpegquality_entryvalues" translatable="false">
+        <item>55</item>
+        <item>65</item>
+        <item>75</item>
+        <item>85</item>
+        <item>95</item>
+        <item>100</item>
+        <item>superfine</item>
+        <item>fine</item>
+        <item>normal</item>
+    </string-array>
     <!-- Camera Preferences focus mode dialog box entries -->
     <string-array name="pref_camera_focusmode_entries" translatable="false">
         <item>@string/pref_camera_focusmode_entry_auto</item>
+	<item>@string/pref_camera_focusmode_entry_normal</item>
         <item>@string/pref_camera_focusmode_entry_infinity</item>
         <item>@string/pref_camera_focusmode_entry_macro</item>
     </string-array>
 
     <string-array name="pref_camera_focusmode_entryvalues" translatable="false">
         <item>auto</item>
+	<item>normal</item>
         <item>infinity</item>
         <item>macro</item>
     </string-array>
@@ -237,23 +275,185 @@
         <item>@drawable/ic_white_balance_cloudy_holo_light</item>
     </array>
 
+    <!-- Camera Preferences Color effect dialog box entries -->
+    <string-array name="pref_camera_coloreffect_entries" translatable="false">
+        <item>@string/pref_camera_coloreffect_entry_none</item>
+        <item>@string/pref_camera_coloreffect_entry_mono</item>
+        <item>@string/pref_camera_coloreffect_entry_sepia</item>
+        <item>@string/pref_camera_coloreffect_entry_negative</item>
+        <item>@string/pref_camera_coloreffect_entry_solarize</item>
+        <item>@string/pref_camera_coloreffect_entry_posterize</item>
+        <item>@string/pref_camera_coloreffect_entry_aqua</item>
+        <item>@string/pref_camera_coloreffect_entry_emboss</item>
+        <item>@string/pref_camera_coloreffect_entry_sketch</item>
+        <item>@string/pref_camera_coloreffect_entry_neon</item>
+        <item>@string/pref_camera_coloreffect_entry_pastel</item>
+        <item>@string/pref_camera_coloreffect_entry_mosaic</item>
+        <item>@string/pref_camera_coloreffect_entry_redtint</item>
+        <item>@string/pref_camera_coloreffect_entry_bluetint</item>
+        <item>@string/pref_camera_coloreffect_entry_greentint</item>
+    </string-array>
+
+    <string-array name="pref_camera_coloreffect_entryvalues" translatable="false">
+        <item>none</item>
+        <item>mono</item>
+        <item>sepia</item>
+        <item>negative</item>
+        <item>solarize</item>
+        <item>posterize</item>
+        <item>aqua</item>
+        <item>emboss</item>
+        <item>sketch</item>
+        <item>neon</item>
+        <item>pastel</item>
+        <item>mosaic</item>
+        <item>red-tint</item>
+        <item>blue-tint</item>
+        <item>green-tint</item>
+    </string-array>
+
+    <!-- Camera Preferences Touch AF/AEC dialog box entries -->
+    <string-array name="pref_camera_touchafaec_entries">
+        <item>@string/pref_camera_touchafaec_entry_off</item>
+        <item>@string/pref_camera_touchafaec_entry_on</item>
+    </string-array>
+
+    <!-- Do not localize entryvalues -->
+    <string-array name="pref_camera_touchafaec_entryvalues">
+        <item>touch-off</item>
+        <item>touch-on</item>
+   </string-array>
+
+    <!-- Camera Preferences MultiLevel dialog box entries -->
+    <string-array name="pref_camera_sharpness_entries">
+        <item>@string/pref_camera_sharpness_entry_level0</item>
+        <item>@string/pref_camera_sharpness_entry_level1</item>
+        <item>@string/pref_camera_sharpness_entry_level2</item>
+        <item>@string/pref_camera_sharpness_entry_level3</item>
+        <item>@string/pref_camera_sharpness_entry_level4</item>
+        <item>@string/pref_camera_sharpness_entry_level5</item>
+        <item>@string/pref_camera_sharpness_entry_level6</item>
+    </string-array>
+
+    <!-- Camera Preferences MultiLevel dialog box entries -->
+    <string-array name="pref_camera_contrast_entries">
+        <item>@string/pref_camera_contrast_entry_level0</item>
+        <item>@string/pref_camera_contrast_entry_level1</item>
+        <item>@string/pref_camera_contrast_entry_level2</item>
+        <item>@string/pref_camera_contrast_entry_level3</item>
+        <item>@string/pref_camera_contrast_entry_level4</item>
+        <item>@string/pref_camera_contrast_entry_level5</item>
+        <item>@string/pref_camera_contrast_entry_level6</item>
+        <item>@string/pref_camera_contrast_entry_level7</item>
+        <item>@string/pref_camera_contrast_entry_level8</item>
+        <item>@string/pref_camera_contrast_entry_level9</item>
+        <item>@string/pref_camera_contrast_entry_level10</item>
+    </string-array>
+
+    <!-- Camera Preferences Saturation dialog box entries -->
+    <string-array name="pref_camera_saturation_entries">
+        <item>@string/pref_camera_saturation_entry_level0</item>
+        <item>@string/pref_camera_saturation_entry_level1</item>
+        <item>@string/pref_camera_saturation_entry_level2</item>
+        <item>@string/pref_camera_saturation_entry_level3</item>
+        <item>@string/pref_camera_saturation_entry_level4</item>
+        <item>@string/pref_camera_saturation_entry_level5</item>
+        <item>@string/pref_camera_saturation_entry_level6</item>
+        <item>@string/pref_camera_saturation_entry_level7</item>
+        <item>@string/pref_camera_saturation_entry_level8</item>
+        <item>@string/pref_camera_saturation_entry_level9</item>
+        <item>@string/pref_camera_saturation_entry_level10</item>
+    </string-array>
+
+    <!-- Entry Valur array for sharpness -->
+    <string-array name="pref_camera_multilevel_sharpness_entryvalues">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+    </string-array>
+
+    <!-- Entry values array is shared between Saturation & Contrast -->
+    <string-array name="pref_camera_multilevel_entryvalues">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+        <item>7</item>
+        <item>8</item>
+        <item>9</item>
+        <item>10</item>
+    </string-array>
     <!-- Camera Preferences Scene Mode dialog box entries -->
     <string-array name="pref_camera_scenemode_entries" translatable="false">
         <item>@string/pref_camera_scenemode_entry_auto</item>
         <item>@string/pref_camera_scenemode_entry_action</item>
+        <item>@string/pref_camera_scenemode_entry_portrait</item>
+        <item>@string/pref_camera_scenemode_entry_landscape</item>
         <item>@string/pref_camera_scenemode_entry_night</item>
+        <item>@string/pref_camera_scenemode_entry_night_portrait</item>
+        <item>@string/pref_camera_scenemode_entry_theatre</item>
+        <item>@string/pref_camera_scenemode_entry_beach</item>
+        <item>@string/pref_camera_scenemode_entry_snow</item>
         <item>@string/pref_camera_scenemode_entry_sunset</item>
+        <item>@string/pref_camera_scenemode_entry_steadyphoto</item>
+        <item>@string/pref_camera_scenemode_entry_fireworks</item>
+        <item>@string/pref_camera_scenemode_entry_sports</item>
         <item>@string/pref_camera_scenemode_entry_party</item>
+        <item>@string/pref_camera_scenemode_entry_candlelight</item>
+        <item>@string/pref_camera_scenemode_entry_backlight</item>
+        <item>@string/pref_camera_scenemode_entry_flowers</item>
+        <item>@string/pref_camera_scenemode_entry_ar</item>
     </string-array>
 
     <string-array name="pref_camera_scenemode_entryvalues" translatable="false">
         <item>auto</item>
         <item>action</item>
+        <item>portrait</item>
+        <item>landscape</item>
         <item>night</item>
+        <item>night-portrait</item>
+        <item>theatre</item>
+        <item>beach</item>
+        <item>snow</item>
         <item>sunset</item>
+        <item>steadyphoto</item>
+        <item>fireworks</item>
+        <item>sports</item>
         <item>party</item>
+        <item>candlelight</item>
+        <item>backlight</item>
+        <item>flowers</item>
+        <item>AR</item>
     </string-array>
 
+    <!-- Camera Preferences ISO dialog box entries -->
+     <string-array name="pref_camera_iso_entries">
+         <item>@string/pref_camera_iso_entry_auto</item>
+         <item>@string/pref_camera_iso_entry_isodeblur</item>
+         <item>@string/pref_camera_iso_entry_iso100</item>
+         <item>@string/pref_camera_iso_entry_iso200</item>
+         <item>@string/pref_camera_iso_entry_iso400</item>
+         <item>@string/pref_camera_iso_entry_iso800</item>
+         <item>@string/pref_camera_iso_entry_iso1600</item>
+    </string-array>
+    
+    <!-- Do not localize entryvalues -->
+    <string-array name="pref_camera_iso_entryvalues">
+         <item>@string/pref_camera_iso_value_auto</item>
+         <item>@string/pref_camera_iso_value_isodeblur</item>
+         <item>@string/pref_camera_iso_value_iso100</item>
+         <item>@string/pref_camera_iso_value_iso200</item>
+         <item>@string/pref_camera_iso_value_iso400</item>
+         <item>@string/pref_camera_iso_value_iso800</item>
+         <item>@string/pref_camera_iso_value_iso1600</item>
+     </string-array>
     <array name="camera_id_entries" translatable="false">
         <item>@string/pref_camera_id_entry_back</item>
         <item>@string/pref_camera_id_entry_front</item>
@@ -282,7 +482,22 @@
         <item>@string/effect_backdropper_disco</item>
         <item>@string/effect_backdropper_gallery</item>
     </string-array>
+    
+    <!-- Camera Preferences Anti Banding dialog box entries -->
+     <string-array name="pref_camera_antibanding_entries">
+         <item>@string/pref_camera_antibanding_entry_0</item>
+         <item>@string/pref_camera_antibanding_entry_1</item>
+         <item>@string/pref_camera_antibanding_entry_2</item>
+         <item>@string/pref_camera_antibanding_entry_3</item>
+     </string-array>
 
+     <string-array name="pref_camera_antibanding_entryvalues">
+         <item>off</item>
+         <item>50hz</item>
+         <item>60hz</item>
+         <item>auto</item>
+     </string-array>
+     
     <string-array name="pref_video_effect_entryvalues" translatable="false">
         <item>@string/pref_video_effect_default</item>
         <item>goofy_face/squeeze</item>
@@ -297,6 +512,15 @@
         <item>backdropper/gallery</item>
     </string-array>
 
+    <!-- Camera Preferences Auto Scene Detection dialog box entries -->
+    <string-array name="pref_camera_scenedetect_entries" translatable="false">
+        <item>@string/pref_camera_scenedetect_entry_off</item>
+        <item>@string/pref_camera_scenedetect_entry_on</item>
+    </string-array>
+    <string-array name="pref_camera_scenedetect_entryvalues" translatable="false">
+        <item>off</item>
+        <item>on</item>
+    </string-array>
     <array name="video_effect_icons" translatable="false">
         <item>@drawable/ic_effects_holo_light</item>
         <item>@drawable/ic_video_effects_faces_squeeze_holo_dark</item>
