@@ -33,6 +33,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences.Editor;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Face;
@@ -1485,6 +1486,25 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
     }
 
+    private void resizeForPreviewAspectRatio() {
+        CameraInfo info = CameraHolder.instance().getCameraInfo()[mCameraId];
+        int degrees = Util.getDisplayRotation(this);
+        Size size = mParameters.getPictureSize();
+        // If Camera orientation and display Orientation is not aligned,
+        // FrameLayout's Aspect Ration needs to be rotated
+        if(((info.orientation - degrees + 360)%180) == 90) {
+            mPreviewFrameLayout.setAspectRatio((double) size.height / size.width);
+        } else {
+            mPreviewFrameLayout.setAspectRatio((double) size.width / size.height);
+        }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration config) {
+        super.onConfigurationChanged(config);
+        resizeForPreviewAspectRatio();
+    }
+
     @Override
     protected void onPause() {
         mPausing = true;
@@ -1863,7 +1883,15 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         mPreviewPanel = findViewById(R.id.frame_layout);
         mPreviewFrameLayout = (PreviewFrameLayout) findViewById(R.id.frame);
-        mPreviewFrameLayout.setAspectRatio((double) size.width / size.height);
+        CameraInfo info = CameraHolder.instance().getCameraInfo()[mCameraId];
+        int degrees = Util.getDisplayRotation(this);
+        // If Camera orientation and display Orientation is not aligned,
+        // FrameLayout's Aspect Ration needs to be rotated
+        if(((info.orientation - degrees + 360)%180) == 90) {
+            mPreviewFrameLayout.setAspectRatio((double) size.height / size.width);
+        } else {
+            mPreviewFrameLayout.setAspectRatio((double) size.width / size.height);
+        }
 
         // Set a preview size that is closest to the viewfinder height and has
         // the right aspect ratio.

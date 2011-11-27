@@ -779,8 +779,17 @@ public class VideoCamera extends ActivityBase
     }
 
     private void resizeForPreviewAspectRatio() {
-        mPreviewFrameLayout.setAspectRatio(
+        CameraInfo info = CameraHolder.instance().getCameraInfo()[mCameraId];
+        int degrees = Util.getDisplayRotation(this);
+        // If Camera orientation and display Orientation is not aligned,
+        // FrameLayout's Aspect Ration needs to be rotated
+        if(((info.orientation - degrees + 360)%180) == 90) {
+            mPreviewFrameLayout.setAspectRatio(
+                (double) mProfile.videoFrameHeight / mProfile.videoFrameWidth);
+        } else {
+            mPreviewFrameLayout.setAspectRatio(
                 (double) mProfile.videoFrameWidth / mProfile.videoFrameHeight);
+        }
     }
 
     @Override
