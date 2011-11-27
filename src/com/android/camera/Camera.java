@@ -208,6 +208,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private static final int SNAPSHOT_IN_PROGRESS = 3;
     private int mCameraState = PREVIEW_STOPPED;
     private boolean mSnapshotOnIdle = false;
+    private boolean mAspectRatioChanged = false;
 
     private ContentResolver mContentResolver;
     private boolean mDidRegister = false;
@@ -1867,6 +1868,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mParameters.setMeteringAreas(mFocusManager.getMeteringAreas());
         }
 
+        Size old_size = mParameters.getPictureSize();
+        Log.v(TAG, "Old picture size : "+ old_size.width + " " + old_size.height);
+
         // Set picture size.
         String pictureSize = mPreferences.getString(
                 CameraSettings.KEY_PICTURE_SIZE, null);
@@ -1880,6 +1884,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         // Set the preview frame aspect ratio according to the picture size.
         Size size = mParameters.getPictureSize();
+        Log.v(TAG, "New picture size : "+ size.width + " " + size.height);
+        if(!size.equals(old_size)){
+            Log.v(TAG, "sravank : new picture size id different from old picture size , restart..");
+            mAspectRatioChanged = true;
+        }
 
         mPreviewPanel = findViewById(R.id.frame_layout);
         mPreviewFrameLayout = (PreviewFrameLayout) findViewById(R.id.frame);
@@ -2026,6 +2035,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 mHandler.sendEmptyMessageDelayed(
                         SET_CAMERA_PARAMETERS_WHEN_IDLE, 1000);
             }
+        }
+        if(mAspectRatioChanged) {
+            Log.v(TAG, "Picture Aspect Ratio changed, restarting preview");
+            startPreview();
+            mAspectRatioChanged = false;
         }
     }
 
