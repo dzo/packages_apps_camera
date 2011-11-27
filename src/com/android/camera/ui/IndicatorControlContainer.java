@@ -20,11 +20,12 @@ import com.android.camera.PreferenceGroup;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import java.util.HashMap;
 
 public abstract class IndicatorControlContainer extends IndicatorControl
         implements OnIndicatorEventListener {
     public abstract void initialize(Context context, PreferenceGroup group,
-            boolean isZoomSupported, String[] keys, String[] otherSettingKeys);
+            boolean isZoomSupported, String[] keys, /*String[]*/HashMap otherSettingKeys);
 
     public IndicatorControlContainer(Context context, AttributeSet attrs) {
         super(context, attrs);

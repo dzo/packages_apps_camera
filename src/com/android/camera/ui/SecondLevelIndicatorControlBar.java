@@ -27,6 +27,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
+import java.util.HashMap;
+
 /**
  * A view that contains camera setting indicators which are spread over a
  * vertical bar in preview frame.
@@ -59,7 +61,7 @@ public class SecondLevelIndicatorControlBar extends IndicatorControl implements
     }
 
     public void initialize(Context context, PreferenceGroup group,
-            String[] keys, String[] otherSettingKeys) {
+            String[] keys, /*String[]*/HashMap otherSettingKeys) {
 
         setPreferenceGroup(group);
         mNonIndicatorButtonCount = getChildCount();

@@ -78,6 +78,8 @@ import java.util.Collections;
 import java.util.Formatter;
 import java.util.List;
 
+import java.util.HashMap;
+
 /** The Camera activity which can preview and take pictures. */
 public class Camera extends ActivityBase implements FocusManager.Listener,
         View.OnTouchListener, ShutterButton.OnShutterButtonListener,
@@ -89,26 +91,29 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private static final String[] OTHER_SETTING_KEYS = {
             CameraSettings.KEY_RECORD_LOCATION,
-            CameraSettings.KEY_FOCUS_MODE,
-            //CameraSettings.KEY_EXPOSURE,
-            //CameraSettings.KEY_SCENE_DETECT,
-            //CameraSettings.KEY_SKIN_TONE_ENHANCEMENT,
             CameraSettings.KEY_PICTURE_SIZE,
             CameraSettings.KEY_JPEG_QUALITY,
-            CameraSettings.KEY_ISO,
-            CameraSettings.KEY_LENSSHADING,
-            //CameraSettings.KEY_MEMORY_COLOR_ENHANCEMENT,
-            //CameraSettings.KEY_AUTOEXPOSURE,
-            CameraSettings.KEY_ANTIBANDING,
-            //CameraSettings.KEY_TOUCH_AF_AEC,
-            //CameraSettings.KEY_SELECTABLE_ZONE_AF,
-            //CameraSettings.KEY_FACE_DETECTION,
             CameraSettings.KEY_PICTURE_FORMAT,
             CameraSettings.KEY_COLOR_EFFECT,
-            //CameraSettings.KEY_HISTOGRAM,
             CameraSettings.KEY_SATURATION,
             CameraSettings.KEY_CONTRAST,
-            CameraSettings.KEY_SHARPNESS};
+            CameraSettings.KEY_SHARPNESS,
+            CameraSettings.KEY_ISO,
+            CameraSettings.KEY_ANTIBANDING
+         };
+    private static final String[] OTHER_SETTING_KEYS_EXTRA = {
+            CameraSettings.KEY_AUTOEXPOSURE,
+            CameraSettings.KEY_FOCUS_MODE,
+            CameraSettings.KEY_SCENE_DETECT,
+            CameraSettings.KEY_TOUCH_AF_AEC,
+            CameraSettings.KEY_SKIN_TONE_ENHANCEMENT,
+            CameraSettings.KEY_SELECTABLE_ZONE_AF,
+            CameraSettings.KEY_LENSSHADING,
+            CameraSettings.KEY_MEMORY_COLOR_ENHANCEMENT,
+            CameraSettings.KEY_FACE_DETECTION,
+            CameraSettings.KEY_HISTOGRAM
+        };
+    public HashMap otherSettingKeys = new HashMap(2);
     private static final int CROP_MSG = 1;
     private static final int FIRST_TIME_INIT = 2;
     private static final int CLEAR_SCREEN_DELAY = 3;
@@ -1183,6 +1188,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 (IndicatorControlContainer) findViewById(R.id.indicator_control);
         if (mIndicatorControlContainer == null) return;
         loadCameraPreferences();
+        otherSettingKeys.put(0, OTHER_SETTING_KEYS);
+        otherSettingKeys.put(1, OTHER_SETTING_KEYS_EXTRA);
         final String[] SETTING_KEYS = {
                 CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_WHITE_BALANCE,
@@ -1192,7 +1199,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         CameraPicker.setImageResourceId(R.drawable.ic_switch_photo_facing_holo_light);
         mIndicatorControlContainer.initialize(this, mPreferenceGroup,
                 mParameters.isZoomSupported(),
-                SETTING_KEYS, OTHER_SETTING_KEYS);
+                SETTING_KEYS,otherSettingKeys);/* OTHER_SETTING_KEYS);*/
         updateSceneModeUI();
         mIndicatorControlContainer.setListener(this);
     }
@@ -2032,6 +2039,19 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
          if (isSupported(autoExposure, mParameters.getSupportedAutoexposure())) {
              mParameters.setAutoExposure(autoExposure);
          }
+
+         // Set auto scene detect.
+        String sceneDetect = mPreferences.getString(
+                CameraSettings.KEY_SCENE_DETECT,
+                getString(R.string.pref_camera_scenedetect_default));
+        if (isSupported(sceneDetect, mParameters.getSupportedSceneDetectModes())) {
+            mParameters.setSceneDetectMode(sceneDetect);
+        } else {
+            sceneDetect = mParameters.getSceneDetectMode();
+            if (sceneDetect == null) {
+                sceneDetect = Parameters.SCENE_DETECT_OFF;
+            }
+        }
 
         /*// Set Touch AF/AEC parameter.
         String touchAfAec = mPreferences.getString(

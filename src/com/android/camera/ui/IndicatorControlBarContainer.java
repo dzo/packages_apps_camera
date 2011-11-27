@@ -28,6 +28,7 @@ import android.view.animation.Animation;
 import android.view.animation.Animation.AnimationListener;
 import android.view.animation.AnimationUtils;
 
+import java.util.HashMap;
 /**
  * The IndicatorControlBarContainer is a IndicatorControl containing
  * IndicatorControlBar, SecondIndicatorControlBar and ZoomControlBar for Phone UI.
@@ -67,7 +68,7 @@ public class IndicatorControlBarContainer extends IndicatorControlContainer {
     @Override
     public void initialize(Context context, PreferenceGroup group,
             boolean isZoomSupported, String[] secondLevelKeys,
-            String[] secondLevelOtherSettingKeys) {
+            /*String[]*/HashMap secondLevelOtherSettingKeys) {
 
         mIndicatorControlBar.initialize(context, group, isZoomSupported);
 

@@ -78,6 +78,8 @@ import java.util.List;
 
 import android.filterpacks.videosink.MediaRecorderStopException;
 
+import java.util.HashMap;
+
 /**
  * The Camcorder activity.
  */
@@ -122,6 +124,9 @@ public class VideoCamera extends ActivityBase
             7, /* TODO: replace it with CamcorderProfile.QUALITY_QVGA */
             CamcorderProfile.QUALITY_QCIF};
 
+    final String[] OTHER_SETTING_KEYS = {
+                    CameraSettings.KEY_RECORD_LOCATION};
+    public HashMap otherSettingKeys = new HashMap(1);
     /**
      * An unpublished intent flag requesting to start recording straight away
      * and return as soon as recording is stopped.
@@ -490,12 +495,11 @@ public class VideoCamera extends ActivityBase
                     CameraSettings.KEY_VIDEO_EFFECT,
                     CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
                     CameraSettings.KEY_VIDEO_QUALITY};
-        final String[] OTHER_SETTING_KEYS = {
-                    CameraSettings.KEY_RECORD_LOCATION};
-
+        
         CameraPicker.setImageResourceId(R.drawable.ic_switch_video_facing_holo_light);
+        otherSettingKeys.put(0,OTHER_SETTING_KEYS);
         mIndicatorControlContainer.initialize(this, mPreferenceGroup,
-                mParameters.isZoomSupported(), SETTING_KEYS, OTHER_SETTING_KEYS);
+                mParameters.isZoomSupported(), SETTING_KEYS, otherSettingKeys);
         mIndicatorControlContainer.setListener(this);
         mPopupGestureDetector = new GestureDetector(this,
                 new PopupGestureListener());

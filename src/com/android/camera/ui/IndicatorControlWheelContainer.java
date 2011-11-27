@@ -26,6 +26,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+import java.util.HashMap;
 /**
  * On the tablet UI, we have IndicatorControlWheelContainer which contains a
  * ShutterButton, a IndicatorControlWheel (which combines first-level and
@@ -61,7 +62,7 @@ public class IndicatorControlWheelContainer extends IndicatorControlContainer {
     }
 
     public void initialize(Context context, PreferenceGroup group,
-            boolean isZoomSupported, String[] keys, String[] otherSettingKeys) {
+            boolean isZoomSupported, String[] keys, /*String[]*/HashMap otherSettingKeys) {
         mIndicatorControlWheel.initialize(context, group, isZoomSupported,
                 keys, otherSettingKeys);
         mIndicatorControlWheel.setOnIndicatorEventListener(this);

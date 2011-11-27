@@ -31,6 +31,8 @@ import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
 
+import java.util.HashMap;
+
 /**
  * A view that contains camera setting indicators.
  */
@@ -48,6 +50,8 @@ public abstract class IndicatorControl extends RelativeLayout implements
     private int mDegree = 0;
 
     protected int mCurrentMode = MODE_CAMERA;
+
+    private OtherSettingsPopup[] mOtherSettingsPopups;
 
     ArrayList<AbstractIndicatorButton> mIndicators =
             new ArrayList<AbstractIndicatorButton>();
@@ -88,7 +92,7 @@ public abstract class IndicatorControl extends RelativeLayout implements
         }
     }
 
-    protected void addControls(String[] keys, String[] otherSettingKeys) {
+    protected void addControls(String[] keys, /*String[]*/HashMap otherSettingKeys) {
         if (keys != null) {
             for (int i = 0; i < keys.length; i++) {
                 IconListPreference pref =
@@ -100,9 +104,14 @@ public abstract class IndicatorControl extends RelativeLayout implements
         }
 
         // Add other settings indicator.
-        if (otherSettingKeys != null) {
-            addOtherSettingIndicator(getContext(),
-                    R.drawable.ic_menu_overflow, otherSettingKeys);
+        if (otherSettingKeys != null) {  //Guru
+            mOtherSettingsPopups = new OtherSettingsPopup[otherSettingKeys.size()];
+            for (int i = 0; i < otherSettingKeys.size(); i++) {
+                addOtherSettingIndicator(getContext(),
+                    R.drawable.ic_menu_overflow, (String []) otherSettingKeys.get(i));
+            }
+            //addOtherSettingIndicator(getContext(),
+            //        R.drawable.ic_menu_overflow, otherSettingKeys);
         }
     }
 

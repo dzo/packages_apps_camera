@@ -32,6 +32,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageView;
 
+import java.util.HashMap;
 /**
  * A view that contains camera setting indicators in two levels. The first-level
  * indicators including the zoom, camera picker, flash and second-level control.
@@ -146,7 +147,7 @@ public class IndicatorControlWheel extends IndicatorControl implements
     }
 
     public void initialize(Context context, PreferenceGroup group,
-            boolean isZoomSupported, String[] keys, String[] otherSettingKeys) {
+            boolean isZoomSupported, String[] keys, /*String[]*/HashMap otherSettingKeys) {
         mShutterButtonRadius = IndicatorControlWheelContainer.SHUTTER_BUTTON_RADIUS;
         mStrokeWidth = Util.dpToPixel(IndicatorControlWheelContainer.STROKE_WIDTH);
         mWheelRadius = mShutterButtonRadius + mStrokeWidth * 0.5;
@@ -167,7 +168,7 @@ public class IndicatorControlWheel extends IndicatorControl implements
 
         // Add second-level buttons.
         mCloseIcon = addImageButton(context, R.drawable.btn_wheel_close_settings, false);
-        addControls(keys, otherSettingKeys);
+        addControls(keys, otherSettingKeys); //Guru
 
         // The angle(in radians) of each icon for touch events.
         mChildRadians = new double[getChildCount()];
