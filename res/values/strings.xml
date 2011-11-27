@@ -107,13 +107,27 @@
     <!-- The Video quality settings in preference [CHAR LIMIT=21] -->
     <string name="pref_video_quality_title">Video quality</string>
     <!-- The default quality value is 5 (720p) -->
-    <string name="pref_video_quality_default" translatable="false">5</string>
+    <string name="pref_video_quality_default" translatable="false">3</string>
     <!-- Video quality setting entry. Videos will be recorded in 1080p quality. [CHAR LIMIT=24] -->
-    <string name="pref_video_quality_entry_1080p" translatable="false">HD</string>
+    <string name="pref_video_quality_entry_1080p" translatable="false">1080P</string>
     <!-- Video quality setting entry. Videos will be recorded in 720p quality. [CHAR LIMIT=24] -->
-    <string name="pref_video_quality_entry_720p" translatable="false">HD</string>
+    <string name="pref_video_quality_entry_720p" translatable="false">720P</string>
     <!-- Video quality setting entry. Videos will be recorded in 480p quality. [CHAR LIMIT=24] -->
-    <string name="pref_video_quality_entry_480p" translatable="false">SD</string>
+    <string name="pref_video_quality_entry_480p" translatable="false">D1</string>
+    <!-- Video quality setting entry. Videos will be recorded in FWVGA quality. [CHAR LIMIT=24] -->
+    <string name="pref_video_quality_entry_fwvga" translatable="false">FWVGA</string>
+    <!-- Video quality setting entry. Videos will be recorded in WVGA quality. [CHAR LIMIT=24] -->
+    <string name="pref_video_quality_entry_wvga" translatable="false">WVGA</string>
+    <!-- Video quality setting entry. Videos will be recorded in VGA quality. [CHAR LIMIT=24] -->
+    <string name="pref_video_quality_entry_vga" translatable="false">VGA</string>
+    <!-- Video quality setting entry. Videos will be recorded in WQVGA quality. [CHAR LIMIT=24] -->
+    <string name="pref_video_quality_entry_wqvga" translatable="false">WQVGA</string>
+    <!-- Video quality setting entry. Videos will be recorded in CIF quality. [CHAR LIMIT=24] -->
+    <string name="pref_video_quality_entry_cif" translatable="false">CIF</string>
+    <!-- Video quality setting entry. Videos will be recorded in QVGA quality. [CHAR LIMIT=24] -->
+    <string name="pref_video_quality_entry_qvga" translatable="false">QVGA</string>
+    <!-- Video quality setting entry. Videos will be recorded in QCIF quality. [CHAR LIMIT=24] -->
+    <string name="pref_video_quality_entry_qcif" translatable="false">QCIF</string>
 
     <!-- Describes the preference dialog for choosing interval between frame capture for
     time lapse recording. Appears at top of the dialog. [CHAR LIMIT=30] -->
@@ -284,7 +298,6 @@
     <string name="pref_camera_contrast_entry_level9">Level 9</string>
     <string name="pref_camera_contrast_entry_level10">Level 10</string>
 
-
     <!-- Settings screen, Multiple levels entries -->
     <string name="pref_camera_saturation_entry_level0">Level 0</string>
     <string name="pref_camera_saturation_entry_level1">Level 1</string>
@@ -403,7 +416,6 @@
      <string name="pref_camera_iso_entry_iso400">ISO400</string>
      <string name="pref_camera_iso_entry_iso800">ISO800</string>
      <string name="pref_camera_iso_entry_iso1600">ISO1600</string>
-
 
      <!-- ISO entry values. Do not translate. -->
      <string name="pref_camera_iso_value_auto">auto</string>
@@ -579,4 +591,28 @@
     <string name="pref_camera_autoexposure_value_frameaverage">frame-average</string>
     <string name="pref_camera_autoexposure_value_centerweighted">center-weighted</string>
     <string name="pref_camera_autoexposure_value_spotmetering">spot-metering</string>
+
+    <!-- Settings screen, Video encoder title -->
+    <string name="pref_camera_videoencoder_title">Video Encoder</string>
+
+    <!-- Settings screen, Video encoder dialog radio button choices -->
+    <string name="pref_camera_videoencoder_entry_0">MPEG4</string>
+    <string name="pref_camera_videoencoder_entry_1">H263</string>
+    <string name="pref_camera_videoencoder_entry_2">H264</string>
+
+    <!-- Default video encoder setting. A numerical value. -->
+    <string name="pref_camera_videoencoder_default" translatable="false">h264</string>
+
+    <!-- Settings screen, Video encoder dialog title -->
+    <string name="pref_camera_videoencoder_dialogtitle">Video Encoder</string>
+
+    <!-- Default audio encoder setting. A numerical value. -->
+    <string name="pref_camera_audioencoder_default" translatable="false">aac</string>
+
+    <!-- Settings screen, Audio encoder title -->
+    <string name="pref_camera_audioencoder_title">Audio Encoder</string>
+
+    <!-- Settings screen, Audio encoder dialog radio button choices -->
+    <string name="pref_camera_audioencoder_entry_0">AMRNB</string>
+    <string name="pref_camera_audioencoder_entry_1">AAC</string>
 </resources>

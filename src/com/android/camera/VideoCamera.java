@@ -92,6 +92,13 @@ public class VideoCamera extends ActivityBase
 
     private static final String TAG = "videocamera";
 
+    private static final String[] OTHER_SETTING_KEYS = {
+                    CameraSettings.KEY_RECORD_LOCATION,
+                    CameraSettings.KEY_VIDEO_ENCODER,
+                    CameraSettings.KEY_AUDIO_ENCODER
+        };
+    public HashMap otherSettingKeys = new HashMap(2);
+
     private static final int CHECK_DISPLAY_ROTATION = 3;
     private static final int CLEAR_SCREEN_DELAY = 4;
     private static final int UPDATE_RECORD_TIME = 5;
@@ -120,13 +127,15 @@ public class VideoCamera extends ActivityBase
             CamcorderProfile.QUALITY_1080P,
             CamcorderProfile.QUALITY_720P,
             CamcorderProfile.QUALITY_480P,
+            CamcorderProfile.QUALITY_FWVGA,
+            CamcorderProfile.QUALITY_WVGA,
+            CamcorderProfile.QUALITY_VGA,
+            CamcorderProfile.QUALITY_WQVGA,
             CamcorderProfile.QUALITY_CIF,
-            7, /* TODO: replace it with CamcorderProfile.QUALITY_QVGA */
+            CamcorderProfile.QUALITY_QVGA,
+            //7, /* TODO: replace it with CamcorderProfile.QUALITY_QVGA */
             CamcorderProfile.QUALITY_QCIF};
 
-    final String[] OTHER_SETTING_KEYS = {
-                    CameraSettings.KEY_RECORD_LOCATION};
-    public HashMap otherSettingKeys = new HashMap(1);
     /**
      * An unpublished intent flag requesting to start recording straight away
      * and return as soon as recording is stopped.
@@ -263,6 +272,8 @@ public class VideoCamera extends ActivityBase
     private ZoomControl mZoomControl;
     private final ZoomListener mZoomListener = new ZoomListener();
 
+    private int mVideoEncoder;
+    private int mAudioEncoder;
     // This Handler is used to post message back onto the main thread of the
     // application
     private class MainHandler extends Handler {
@@ -688,6 +699,7 @@ public class VideoCamera extends ActivityBase
         String videoQuality =
                 mPreferences.getString(CameraSettings.KEY_VIDEO_QUALITY,
                         defaultQuality);
+
         int quality = Integer.valueOf(videoQuality);
 
         // Set video quality.
@@ -736,6 +748,13 @@ public class VideoCamera extends ActivityBase
                         null);
             }
         }
+        String videoEncoder = mPreferences.getString(
+                        CameraSettings.KEY_VIDEO_ENCODER,
+                        getString(R.string.pref_camera_videoencoder_default));
+
+        String audioEncoder = mPreferences.getString(
+                        CameraSettings.KEY_AUDIO_ENCODER,
+                        getString(R.string.pref_camera_audioencoder_default));
         // Read time lapse recording interval.
         String frameIntervalStr = mPreferences.getString(
                 CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,

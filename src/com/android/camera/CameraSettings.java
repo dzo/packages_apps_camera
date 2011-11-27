@@ -87,6 +87,9 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
 
     public static final int DEFAULT_VIDEO_DURATION = 0; // no limit
 
+    public static final String DEFAULT_VIDEO_QUALITY_VALUE = "custom";
+    public static final String KEY_VIDEO_ENCODER = "pref_camera_videoencoder_key";
+    public static final String KEY_AUDIO_ENCODER = "pref_camera_audioencoder_key";
     private static final String TAG = "CameraSettings";
 
     private final Context mContext;
@@ -607,6 +610,27 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
             supported.add(Integer.toString(CamcorderProfile.QUALITY_480P));
         }
 
+        if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QCIF)) {
+            supported.add(Integer.toString(CamcorderProfile.QUALITY_QCIF));
+        }
+        if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_CIF)) {
+            supported.add(Integer.toString(CamcorderProfile.QUALITY_CIF));
+        }
+        if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_FWVGA)) {
+            supported.add(Integer.toString(CamcorderProfile.QUALITY_FWVGA));
+        }
+        if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_WVGA)) {
+            supported.add(Integer.toString(CamcorderProfile.QUALITY_WVGA));
+        }
+        if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_VGA)) {
+            supported.add(Integer.toString(CamcorderProfile.QUALITY_VGA));
+        }
+        if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_WQVGA)) {
+            supported.add(Integer.toString(CamcorderProfile.QUALITY_480P));
+        }
+        if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QVGA)) {
+            supported.add(Integer.toString(CamcorderProfile.QUALITY_QVGA));
+        }
         return supported;
     }
 
