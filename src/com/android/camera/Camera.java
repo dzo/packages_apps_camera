@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.android.camera;
 
 import com.android.camera.ui.CameraPicker;
@@ -65,6 +64,9 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
+import android.widget.ProgressBar;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -180,6 +182,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     // The bitmap of the last captured picture thumbnail and the URI of the
     // original picture.
     private Thumbnail mThumbnail;
+    private static final int MINIMUM_BRIGHTNESS = 0;
+    private static final int MAXIMUM_BRIGHTNESS = 6;
+    private int mbrightness = 3;
+    private int mbrightness_step = 1;
+    private ProgressBar brightnessProgressBar;
     // An imageview showing showing the last captured picture thumbnail.
     private RotateImageView mThumbnailView;
     private ModePicker mModePicker;
@@ -768,6 +775,16 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
     }
 
+    private OnSeekBarChangeListener mSeekListener = new OnSeekBarChangeListener() {
+        public void onStartTrackingTouch(SeekBar bar) {
+        // no support
+        }
+        public void onProgressChanged(SeekBar bar, int progress, boolean fromtouch) {
+        }
+        public void onStopTrackingTouch(SeekBar bar) {
+        }
+    };
+
     private final class AutoFocusCallback
             implements android.hardware.Camera.AutoFocusCallback {
         public void onAutoFocus(
@@ -1102,6 +1119,14 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         SurfaceHolder holder = preview.getHolder();
         holder.addCallback(this);
         holder.setType(SurfaceHolder.SURFACE_TYPE_PUSH_BUFFERS);
+
+        brightnessProgressBar = (ProgressBar) findViewById(R.id.progress);
+        if (brightnessProgressBar instanceof SeekBar) {
+            SeekBar seeker = (SeekBar) brightnessProgressBar;
+            seeker.setOnSeekBarChangeListener(mSeekListener);
+        }
+        brightnessProgressBar.setMax(MAXIMUM_BRIGHTNESS);
+        brightnessProgressBar.setProgress(mbrightness);
 
         // Make sure camera device is opened.
         try {
@@ -1660,39 +1685,75 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     }
 
     @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_FOCUS:
-                if (mFirstTimeInitialized && event.getRepeatCount() == 0) {
-                    onShutterButtonFocus(true);
-                }
-                return true;
-            case KeyEvent.KEYCODE_CAMERA:
-                if (mFirstTimeInitialized && event.getRepeatCount() == 0) {
-                    onShutterButtonClick();
-                }
-                return true;
-            case KeyEvent.KEYCODE_DPAD_CENTER:
-                // If we get a dpad center event without any focused view, move
-                // the focus to the shutter button and press it.
-                if (mFirstTimeInitialized && event.getRepeatCount() == 0) {
-                    // Start auto-focus immediately to reduce shutter lag. After
-                    // the shutter button gets the focus, onShutterButtonFocus()
-                    // will be called again but it is fine.
-                    if (collapseCameraControls()) return true;
-                    onShutterButtonFocus(true);
-                    if (mShutterButton.isInTouchMode()) {
-                        mShutterButton.requestFocusFromTouch();
-                    } else {
-                        mShutterButton.requestFocus();
+        public boolean onKeyDown(int keyCode, KeyEvent event) {
+            switch (keyCode) {
+                case KeyEvent.KEYCODE_FOCUS:
+                    if (mFirstTimeInitialized && event.getRepeatCount() == 0) {
+                        onShutterButtonFocus(true);
                     }
-                    mShutterButton.setPressed(true);
-                }
-                return true;
-        }
+                    return true;
+                case KeyEvent.KEYCODE_CAMERA:
+                    if (mFirstTimeInitialized && event.getRepeatCount() == 0) {
+                        onShutterButtonClick();
+                    }
+                    return true;
+                case KeyEvent.KEYCODE_DPAD_LEFT:
+                    if ( (mCameraState != PREVIEW_STOPPED) &&
+                            (mFocusManager.getCurrentFocusState() != mFocusManager.STATE_FOCUSING) &&
+                            (mFocusManager.getCurrentFocusState() != mFocusManager.STATE_FOCUSING_SNAP_ON_FINISH) ) {
+                        if (mbrightness > MINIMUM_BRIGHTNESS) {
+                            mbrightness-=mbrightness_step;
 
-        return super.onKeyDown(keyCode, event);
-    }
+                            /* Set the "luma-adaptation" parameter */
+                            mParameters = mCameraDevice.getParameters();
+                            mParameters.set("luma-adaptation", String.valueOf(mbrightness));
+                            mCameraDevice.setParameters(mParameters);
+                        }
+
+                        brightnessProgressBar.setProgress(mbrightness);
+                        brightnessProgressBar.setVisibility(View.VISIBLE);
+
+                    }
+                    break;
+                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                    if ( (mCameraState != PREVIEW_STOPPED) &&
+                            (mFocusManager.getCurrentFocusState() != mFocusManager.STATE_FOCUSING) &&
+                            (mFocusManager.getCurrentFocusState() != mFocusManager.STATE_FOCUSING_SNAP_ON_FINISH) ) {
+                        if (mbrightness < MAXIMUM_BRIGHTNESS) {
+                            mbrightness+=mbrightness_step;
+
+                            /* Set the "luma-adaptation" parameter */
+                            mParameters = mCameraDevice.getParameters();
+                            mParameters.set("luma-adaptation", String.valueOf(mbrightness));
+                            mCameraDevice.setParameters(mParameters);
+
+                        }
+                        brightnessProgressBar.setProgress(mbrightness);
+                        brightnessProgressBar.setVisibility(View.VISIBLE);
+
+                    }
+                    break;
+                case KeyEvent.KEYCODE_DPAD_CENTER:
+                    // If we get a dpad center event without any focused view, move
+                    // the focus to the shutter button and press it.
+                    if (mFirstTimeInitialized && event.getRepeatCount() == 0) {
+                        // Start auto-focus immediately to reduce shutter lag. After
+                        // the shutter button gets the focus, onShutterButtonFocus()
+                        // will be called again but it is fine.
+                        if (collapseCameraControls()) return true;
+                        onShutterButtonFocus(true);
+                        if (mShutterButton.isInTouchMode()) {
+                            mShutterButton.requestFocusFromTouch();
+                        } else {
+                            mShutterButton.requestFocus();
+                        }
+                        mShutterButton.setPressed(true);
+                    }
+                    return true;
+            }
+
+            return super.onKeyDown(keyCode, event);
+        }
 
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
@@ -2032,10 +2093,10 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                         mGraphView.setVisibility(View.INVISIBLE);
                      mCameraDevice.setHistogramMode(null);
                 }
-        }
+        }*/
         //Set Brightness.
         mParameters.set("luma-adaptation", String.valueOf(mbrightness));
-*/
+
          // Set auto exposure parameter.
          String autoExposure = mPreferences.getString(
                  CameraSettings.KEY_AUTOEXPOSURE,
@@ -2147,9 +2208,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         String colorEffect = mPreferences.getString(
                 CameraSettings.KEY_COLOR_EFFECT,
                 getString(R.string.pref_camera_coloreffect_default));
-        Log.e(TAG, "<DEBUG> Default colorEffect is " + colorEffect);
         if (isSupported(colorEffect, mParameters.getSupportedColorEffects())) {
-            Log.e(TAG, "<DEBUG> Set colorEffect ");
             mParameters.setColorEffect(colorEffect);
         }
 

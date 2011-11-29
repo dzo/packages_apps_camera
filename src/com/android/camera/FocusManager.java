@@ -47,12 +47,12 @@ public class FocusManager {
     private static final int RESET_TOUCH_FOCUS_DELAY = 3000;
 
     private int mState = STATE_IDLE;
-    private static final int STATE_IDLE = 0; // Focus is not active.
-    private static final int STATE_FOCUSING = 1; // Focus is in progress.
+    public static final int STATE_IDLE = 0; // Focus is not active.
+    public static final int STATE_FOCUSING = 1; // Focus is in progress.
     // Focus is in progress and the camera should take a picture after focus finishes.
-    private static final int STATE_FOCUSING_SNAP_ON_FINISH = 2;
-    private static final int STATE_SUCCESS = 3; // Focus finishes and succeeds.
-    private static final int STATE_FAIL = 4; // Focus finishes and fails.
+    public static final int STATE_FOCUSING_SNAP_ON_FINISH = 2;
+    public static final int STATE_SUCCESS = 3; // Focus finishes and succeeds.
+    public static final int STATE_FAIL = 4; // Focus finishes and fails.
 
     private boolean mInitialized;
     private boolean mFocusAreaSupported;
@@ -478,6 +478,10 @@ public class FocusManager {
 
     public boolean isFocusCompleted() {
         return mState == STATE_SUCCESS || mState == STATE_FAIL;
+    }
+
+    public int getCurrentFocusState() {
+        return mState;
     }
 
     public void removeMessages() {
