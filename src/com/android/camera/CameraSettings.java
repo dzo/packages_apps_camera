@@ -296,10 +296,10 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
             filterUnsupportedOptions(group,
                     redeyeReduction, mParameters.getSupportedRedeyeReductionModes());
         }*/
-        /*if (denoise != null) {
+        if (denoise != null) {
             filterUnsupportedOptions(group,
             denoise, mParameters.getSupportedDenoiseModes());
-        }*/
+        }
 
         if (timeLapseInterval != null) resetIfInvalid(timeLapseInterval);
         if (videoEffect != null) {

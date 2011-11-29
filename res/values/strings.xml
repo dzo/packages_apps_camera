@@ -381,6 +381,14 @@
     <string name="pref_exposure_title">Exposure</string>
     <string name="pref_exposure_default" translatable="false">0</string>
 
+    <!-- Denoise Settings screen, setting title text -->
+    <string name="pref_camera_denoise_title">Wavelet Denoise Mode</string>
+    <string name="pref_camera_denoise_default" translatable="false">denoise-off</string>
+
+    <!-- Denoise Settings screen, Record location dialog choices -->
+    <string name="pref_camera_denoise_entry_off">Off</string>
+    <string name="pref_camera_denoise_entry_on">On</string>
+
      <!-- Default iso setting. Do not translate. -->
      <string name="pref_camera_iso_default">auto</string>
 

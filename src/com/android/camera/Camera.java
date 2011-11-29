@@ -111,7 +111,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             CameraSettings.KEY_LENSSHADING,
             CameraSettings.KEY_MEMORY_COLOR_ENHANCEMENT,
             CameraSettings.KEY_FACE_DETECTION,
-            CameraSettings.KEY_HISTOGRAM
+            CameraSettings.KEY_HISTOGRAM,
+            CameraSettings.KEY_DENOISE
         };
     public HashMap otherSettingKeys = new HashMap(2);
     private static final int CROP_MSG = 1;
@@ -2149,6 +2150,15 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mParameters.setColorEffect(colorEffect);
         }
 
+        String saturationStr = mPreferences.getString(
+                CameraSettings.KEY_SATURATION,
+                getString(R.string.pref_camera_saturation_default));
+            int saturation = Integer.parseInt(saturationStr);
+        Log.e(TAG, "<DEBUG> saturation is " + saturation);
+            if((0 <= saturation) &&
+                (saturation <= mParameters.getMaxSaturation()))
+            mParameters.setSaturation(saturation);
+
         // Set exposure compensation
         int value = CameraSettings.readExposure(mPreferences);
         int max = mParameters.getMaxExposureCompensation();
@@ -2197,7 +2207,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                     whiteBalance = Parameters.WHITE_BALANCE_AUTO;
                 }
             }
-
+            // Set Wavelet denoise mode
+            if (mParameters.getSupportedDenoiseModes() != null) {
+                String Denoise = mPreferences.getString( CameraSettings.KEY_DENOISE,
+                                 getString(R.string.pref_camera_denoise_default));
+                                 mParameters.setDenoise(Denoise);
+            }
             // Set focus mode.
             mFocusManager.overrideFocusMode(null);
             mParameters.setFocusMode(mFocusManager.getFocusMode());
