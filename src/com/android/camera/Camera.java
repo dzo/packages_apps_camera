@@ -233,6 +233,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private boolean mPausing;
     private boolean mFirstTimeInitialized;
     private boolean mIsImageCaptureIntent;
+    private int mCameraId;
 
     private static final int PREVIEW_STOPPED = 0;
     private static final int IDLE = 1;  // preview is active
@@ -289,7 +290,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     // multiple cameras support
     private int mNumberOfCameras;
-    private int mCameraId;
     private int mFrontCameraId;
     private int mBackCameraId;
 
@@ -1972,17 +1972,20 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 mSceneMode = Parameters.SCENE_MODE_AUTO;
             }
         }
-
         // Set JPEG quality.
-        int jpegQuality = CameraProfile.getJpegEncodingQualityParameter(mCameraId,
-                CameraProfile.QUALITY_HIGH);
-        mParameters.setJpegQuality(jpegQuality);
+        String jpegQuality = mPreferences.getString(
+                CameraSettings.KEY_JPEG_QUALITY,
+                getString(R.string.pref_camera_jpegquality_default));
 
-        // For the following settings, we need to check if the settings are
-        // still supported by latest driver, if not, ignore the settings.
+        //mUnsupportedJpegQuality = false;
+        Size pic_size = mParameters.getPictureSize();
+        if("100".equals(jpegQuality) && (pic_size.width >= 3200)){
+            //mUnsupportedJpegQuality = true;
+        }else {
+            mParameters.setJpegQuality(JpegEncodingQualityMappings.getQualityNumber(jpegQuality));
+        }
 
-         // Set ISO parameter.
-        
+        // Set ISO parameter.
         String iso = mPreferences.getString(
                 CameraSettings.KEY_ISO,
                 getString(R.string.pref_camera_iso_default));
@@ -2504,5 +2507,41 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         mMeteringAreaSupported = (mInitialParams.getMaxNumMeteringAreas() > 0);
         mAeLockSupported = mInitialParams.isAutoExposureLockSupported();
         mAwbLockSupported = mInitialParams.isAutoWhiteBalanceLockSupported();
+    }
+}
+/*
+ * Provide a mapping for Jpeg encoding quality levels
+ * from String representation to numeric representation.
+ */
+class JpegEncodingQualityMappings {
+    private static final String TAG = "JpegEncodingQualityMappings";
+    private static final int DEFAULT_QUALITY = 85;
+    private static HashMap<String, Integer> mHashMap =
+            new HashMap<String, Integer>();
+
+    static {
+        mHashMap.put("normal",    CameraProfile.QUALITY_LOW);
+        mHashMap.put("fine",      CameraProfile.QUALITY_MEDIUM);
+        mHashMap.put("superfine", CameraProfile.QUALITY_HIGH);
+    }
+
+    // Retrieve and return the Jpeg encoding quality number
+    // for the given quality level.
+    public static int getQualityNumber(String jpegQuality) {
+        try{
+            int qualityPercentile = Integer.parseInt(jpegQuality);
+            if(qualityPercentile >= 0 && qualityPercentile <=100)
+                return qualityPercentile;
+            else
+                return DEFAULT_QUALITY;
+        } catch(NumberFormatException nfe){
+            //chosen quality is not a number, continue
+        }
+        Integer quality = mHashMap.get(jpegQuality);
+        if (quality == null) {
+            Log.w(TAG, "Unknown Jpeg quality: " + jpegQuality);
+            return DEFAULT_QUALITY;
+        }
+        return CameraProfile.getJpegEncodingQualityParameter(quality.intValue());
     }
 }

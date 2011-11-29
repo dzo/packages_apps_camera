@@ -426,9 +426,6 @@
      <string name="pref_camera_antibanding_entry_2">60 Hz</string>
      <string name="pref_camera_antibanding_entry_3">Auto</string>
 
-     <!-- Default auto exposure setting. Do not translate. -->
-    <string name="pref_camera_autoexposure_default">frame-average</string>
-
     <!-- Dialog "OK" button. Dismisses dialog. -->
     <string name="dialog_ok">OK</string>
 
@@ -567,4 +564,19 @@
 
     <!-- TODO: remove the string as it is a work-around solution to bypass the default speak of the element type. -->
     <string name="empty" translatable="false">" "</string>
+
+    <!-- Default auto exposure setting. Do not translate. -->
+    <string name="pref_camera_autoexposure_default">frame-average</string>
+    <!-- Settings screen, Select auto exposure title -->
+    <string name="pref_camera_autoexposure_title">Select Auto Exposure Mode</string>
+
+    <!-- Settings screen, auto exposure dialog radio button choices -->
+    <string name="pref_camera_autoexposure_entry_frameaverage">Frame Average</string>
+    <string name="pref_camera_autoexposure_entry_centerweighted">Center Weighted</string>
+    <string name="pref_camera_autoexposure_entry_spotmetering">Spot Metering</string>
+
+    <!-- Auto exposure entry values. Do not translate. -->
+    <string name="pref_camera_autoexposure_value_frameaverage">frame-average</string>
+    <string name="pref_camera_autoexposure_value_centerweighted">center-weighted</string>
+    <string name="pref_camera_autoexposure_value_spotmetering">spot-metering</string>
 </resources>
