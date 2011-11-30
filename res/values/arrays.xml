@@ -601,4 +601,17 @@
         <item>amrnb</item>
         <item>aac</item>
     </string-array>
+
+    <!-- Camera Preferences Skin Tone Enhancement dialog box entries -->
+     <string-array name="pref_camera_skinToneEnhancement_entries">
+          <item>@string/pref_camera_skinToneEnhancement_entry_enable</item>
+          <item>@string/pref_camera_skinToneEnhancement_entry_disable</item>
+     </string-array>
+
+     <!-- Do not localize entryvalues -->
+     <string-array name="pref_camera_skinToneEnhancement_entryvalues">
+          <item>@string/pref_camera_skinToneEnhancement_value_enable</item>
+          <item>@string/pref_camera_skinToneEnhancement_value_disable</item>
+     </string-array>
+
 </resources>

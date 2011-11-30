@@ -126,6 +126,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private static final int DISMISS_TAP_TO_FOCUS_TOAST = 7;
     private static final int UPDATE_THUMBNAIL = 8;
 
+    private static final int SET_SKIN_TONE_FACTOR = 9;
+
     // The subset of parameters we need to update in setCameraParameters().
     private static final int UPDATE_PARAM_INITIALIZE = 1;
     private static final int UPDATE_PARAM_ZOOM = 2;
@@ -302,6 +304,18 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private boolean mQuickCapture;
 
+    private static final int MIN_SCE_FACTOR = -10;
+    private static final int MAX_SCE_FACTOR = +10;
+    private int SCE_FACTOR_STEP = 10;
+    private int mskinToneValue = 0;
+    private boolean mSkinToneSeekBar= false;
+    private boolean mSeekBarInitialized = false;
+    private SeekBar skinToneSeekBar;
+    private TextView LeftValue;
+    private TextView RightValue;
+    private TextView Title;
+
+
     /**
      * This Handler is used to post message back onto the main thread of the
      * application
@@ -357,6 +371,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 case UPDATE_THUMBNAIL: {
                     mImageSaver.updateThumbnail();
                     break;
+                }
+
+                case SET_SKIN_TONE_FACTOR: {
+                     setSkinToneFactor();
+                     mSeekBarInitialized = true;
+                     break;
                 }
             }
         }
@@ -785,6 +805,35 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
     };
 
+    private OnSeekBarChangeListener mskinToneSeekListener = new OnSeekBarChangeListener() {
+        public void onStartTrackingTouch(SeekBar bar) {
+        // no support
+        }
+
+        public void onProgressChanged(SeekBar bar, int progress, boolean fromtouch) {
+            int value = (progress + MIN_SCE_FACTOR) * SCE_FACTOR_STEP;
+            if(progress > (MAX_SCE_FACTOR - MIN_SCE_FACTOR)/2){
+                RightValue.setText(String.valueOf(value));
+                LeftValue.setText("");
+            } else if (progress < (MAX_SCE_FACTOR - MIN_SCE_FACTOR)/2){
+                LeftValue.setText(String.valueOf(value));
+                RightValue.setText("");
+            } else {
+                LeftValue.setText("");
+                RightValue.setText("");
+            }
+            if(value != mskinToneValue) {
+                mskinToneValue = value;
+                mParameters = mCameraDevice.getParameters();
+                mParameters.set("skinToneEnhancement", String.valueOf(mskinToneValue));
+                mCameraDevice.setParameters(mParameters);
+            }
+        }
+
+        public void onStopTrackingTouch(SeekBar bar) {
+        }
+    };
+
     private final class AutoFocusCallback
             implements android.hardware.Camera.AutoFocusCallback {
         public void onAutoFocus(
@@ -1127,6 +1176,14 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
         brightnessProgressBar.setMax(MAXIMUM_BRIGHTNESS);
         brightnessProgressBar.setProgress(mbrightness);
+
+
+        skinToneSeekBar = (SeekBar) findViewById(R.id.skintoneseek);
+        skinToneSeekBar.setOnSeekBarChangeListener(mskinToneSeekListener);
+        skinToneSeekBar.setVisibility(View.INVISIBLE);
+        Title = (TextView)findViewById(R.id.skintonetitle);
+        RightValue = (TextView)findViewById(R.id.skintoneright);
+        LeftValue = (TextView)findViewById(R.id.skintoneleft);
 
         // Make sure camera device is opened.
         try {
@@ -1527,6 +1584,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 return;
             }
         }
+
+        //Check if the skinTone SeekBar could not be enabled during updateCameraParametersPreference()
+       //due to the finite latency of loading the seekBar layout when switching modes
+       // for same Camera Device instance
+        if (mSkinToneSeekBar != true)
+            mHandler.sendEmptyMessage(SET_SKIN_TONE_FACTOR);
 
         if (mSurfaceHolder != null) {
             // If first time initialization is not finished, put it in the
@@ -2169,6 +2232,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
              }
          }
 */
+
         // Set sharpness parameter.
         String sharpnessStr = mPreferences.getString(
                 CameraSettings.KEY_SHARPNESS,
@@ -2210,6 +2274,17 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 getString(R.string.pref_camera_coloreffect_default));
         if (isSupported(colorEffect, mParameters.getSupportedColorEffects())) {
             mParameters.setColorEffect(colorEffect);
+        }
+
+        // skin tone ie enabled only for auto,party and portrait BSM
+        // when color effects are not enabled
+        if((Parameters.SCENE_MODE_AUTO.equals(mSceneMode) ||
+            Parameters.SCENE_MODE_PARTY.equals(mSceneMode) |
+            Parameters.SCENE_MODE_PORTRAIT.equals(mSceneMode))&&
+            (Parameters.EFFECT_NONE.equals(colorEffect))) {
+            //Set Skin Tone Correction factor
+            if(mSeekBarInitialized == true)
+                setSkinToneFactor();
         }
 
         String saturationStr = mPreferences.getString(
@@ -2566,6 +2641,61 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         mMeteringAreaSupported = (mInitialParams.getMaxNumMeteringAreas() > 0);
         mAeLockSupported = mInitialParams.isAutoExposureLockSupported();
         mAwbLockSupported = mInitialParams.isAutoWhiteBalanceLockSupported();
+    }
+
+    private void setSkinToneFactor(){
+       if (skinToneSeekBar == null) return;
+
+       String skinToneEnhancementPref = mPreferences.getString(
+                CameraSettings.KEY_SKIN_TONE_ENHANCEMENT,
+       getString(R.string.pref_camera_skinToneEnhancement_default));
+       if(isSupported(skinToneEnhancementPref,
+               mParameters.getSupportedSkinToneEnhancementModes())){
+         if(skinToneEnhancementPref.equals("enable")) {
+               Log.e(TAG, "Skin tone bar: enable");
+               enableSkinToneSeekBar();
+          } else {
+              Log.e(TAG, "Skin tone bar: disable");
+               disableSkinToneSeekBar();
+          }
+       } else {
+           Log.e(TAG, "Skin tone bar: Not supported");
+          skinToneSeekBar.setVisibility(View.INVISIBLE);
+       }
+    }
+
+    private void enableSkinToneSeekBar() {
+        int progress;
+        if(brightnessProgressBar != null)
+           brightnessProgressBar.setVisibility(View.INVISIBLE);
+        skinToneSeekBar.setMax(MAX_SCE_FACTOR-MIN_SCE_FACTOR);
+        skinToneSeekBar.setVisibility(View.VISIBLE);
+        skinToneSeekBar.requestFocus();
+        if (mskinToneValue != 0) {
+            progress = (mskinToneValue/SCE_FACTOR_STEP)-MIN_SCE_FACTOR;
+            mskinToneSeekListener.onProgressChanged(skinToneSeekBar,progress,false);
+        }else {
+            progress = (MAX_SCE_FACTOR-MIN_SCE_FACTOR)/2;
+            RightValue.setText("");
+            LeftValue.setText("");
+        }
+        skinToneSeekBar.setProgress(progress);
+        Title.setText("Skin Tone Enhancement");
+        Title.setVisibility(View.VISIBLE);
+        RightValue.setVisibility(View.VISIBLE);
+        LeftValue.setVisibility(View.VISIBLE);
+        mSkinToneSeekBar = true;
+    }
+
+    private void disableSkinToneSeekBar() {
+         skinToneSeekBar.setVisibility(View.INVISIBLE);
+         Title.setVisibility(View.INVISIBLE);
+         RightValue.setVisibility(View.INVISIBLE);
+         LeftValue.setVisibility(View.INVISIBLE);
+         mskinToneValue = 0;
+         mSkinToneSeekBar = false;
+        if(brightnessProgressBar != null)
+           brightnessProgressBar.setVisibility(View.VISIBLE);
     }
 }
 /*

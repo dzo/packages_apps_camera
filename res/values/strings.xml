@@ -615,4 +615,18 @@
     <!-- Settings screen, Audio encoder dialog radio button choices -->
     <string name="pref_camera_audioencoder_entry_0">AMRNB</string>
     <string name="pref_camera_audioencoder_entry_1">AAC</string>
+
+     <!-- Default Skin Tone Enhancement setting. Do not translate. -->
+     <string name="pref_camera_skinToneEnhancement_default">disable</string>
+
+     <!-- Settings screen, Select Skin Tone Enhancement title -->
+     <string name="pref_camera_skinToneEnhancement_title">Skin Tone Enhancement</string>
+
+     <!-- Settings screen, Skin Tone Enhancement radio button choices -->
+     <string name="pref_camera_skinToneEnhancement_entry_enable">Enable</string>
+     <string name="pref_camera_skinToneEnhancement_entry_disable">Disable</string>
+
+     <!-- Skin Tone Enhancement entry values. Do not translate. -->
+     <string name="pref_camera_skinToneEnhancement_value_enable">enable</string>
+     <string name="pref_camera_skinToneEnhancement_value_disable">disable</string>
 </resources>

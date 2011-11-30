@@ -46,6 +46,47 @@
                 android:layout_marginBottom="14dip"
                 android:layout_marginLeft="30dip"
                 android:layout_marginRight="30dip" />
+
+            <TableLayout
+                    android:id="@+id/relative_seek"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="20px"
+                    android:layout_marginRight="20px"
+                    android:layout_marginLeft="20px"
+                    android:stretchColumns="1">
+            <TableRow>
+                <TextView
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/skintonetitle"
+                  android:layout_gravity="center"
+                  android:textSize="22.0sp"
+                  android:textStyle="bold" />
+            </TableRow>
+            <TableRow> <SeekBar
+              android:id="@+id/skintoneseek"
+              android:layout_below="@+id/skintonetitle"
+              android:layout_width="400px"
+              android:layout_height="33dip"
+              android:layout_marginLeft="25px"
+              android:layout_marginTop="2dip"/>
+            </TableRow>
+            <TableRow>
+                <TextView
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/skintoneleft"
+                  android:textSize="22.0sp"
+                  android:textStyle="bold" />
+                <TextView
+                  android:layout_width="fill_parent"
+                  android:layout_height="wrap_content"
+                  android:id="@+id/skintoneright"
+                  android:textSize="22.0sp"
+                  android:textStyle="bold" />
+             </TableRow>
+            </TableLayout>
         </RelativeLayout>
     </com.android.camera.PreviewFrameLayout>
 </RelativeLayout>

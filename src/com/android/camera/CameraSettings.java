@@ -260,10 +260,10 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
             filterUnsupportedOptions(group,
                     histogram, mParameters.getSupportedHistogramModes());
         }*/
-        /*if (skinToneEnhancement!= null) {
+        if (skinToneEnhancement!= null) {
             filterUnsupportedOptions(group,
                     skinToneEnhancement, mParameters.getSupportedSkinToneEnhancementModes());
-        }*/
+        }
         /*if (antiBanding != null) {
             filterUnsupportedOptions(group,
                      antiBanding, mParameters.getSupportedAntibanding());
