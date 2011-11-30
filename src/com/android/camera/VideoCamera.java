@@ -2439,7 +2439,7 @@ public class VideoCamera extends ActivityBase
         int orientation = Exif.getOrientation(data);
         Size s = mParameters.getPictureSize();
         Uri uri = Storage.addImage(mContentResolver, title, dateTaken, loc, orientation, data,
-                s.width, s.height);
+                s.width, s.height,".jpg");
         if (uri != null) {
             // Create a thumbnail whose width is equal or bigger than that of the preview.
             int ratio = (int) Math.ceil((double) mParameters.getPictureSize().width

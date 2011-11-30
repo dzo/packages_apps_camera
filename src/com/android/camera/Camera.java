@@ -1021,10 +1021,22 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         // Runs in saver thread
         private void storeImage(final byte[] data, Location loc, int width,
                 int height, long dateTaken, int previewWidth) {
+            String ext = null;
+            String pictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
             String title = Util.createJpegName(dateTaken);
             int orientation = Exif.getOrientation(data);
+
+            if(pictureFormat == null ||
+                        PIXEL_FORMAT_JPEG.equalsIgnoreCase(pictureFormat)){
+                ext = ".jpg";
+            }
+
+            if(PIXEL_FORMAT_RAW.equalsIgnoreCase(pictureFormat)){
+                ext = ".raw";
+            }
+
             Uri uri = Storage.addImage(mContentResolver, title, dateTaken,
-                    loc, orientation, data, width, height);
+                    loc, orientation, data, width, height,ext);
             if (uri != null) {
                 boolean needThumbnail;
                 synchronized (this) {

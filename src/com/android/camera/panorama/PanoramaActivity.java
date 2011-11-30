@@ -881,7 +881,7 @@ public class PanoramaActivity extends ActivityBase implements
             String imagePath = PanoUtil.createName(
                     getResources().getString(R.string.pano_file_name_format), mTimeTaken);
             return Storage.addImage(getContentResolver(), imagePath, mTimeTaken, null,
-                    orientation, jpegData, width, height);
+                    orientation, jpegData, width, height,".jpg");
         }
         return null;
     }

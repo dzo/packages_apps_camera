@@ -50,9 +50,9 @@ public class Storage {
     private static final int BUFSIZE = 4096;
 
     public static Uri addImage(ContentResolver resolver, String title, long date,
-                Location location, int orientation, byte[] jpeg, int width, int height) {
+                Location location, int orientation, byte[] jpeg, int width, int height, String ext) {
         // Save the image.
-        String path = DIRECTORY + '/' + title + ".jpg";
+        String path = DIRECTORY + '/' + title +  ext; //".jpg";
         FileOutputStream out = null;
         try {
             out = new FileOutputStream(path);
