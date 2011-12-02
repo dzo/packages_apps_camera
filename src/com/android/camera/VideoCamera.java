@@ -272,6 +272,71 @@ public class VideoCamera extends ActivityBase
     private ZoomControl mZoomControl;
     private final ZoomListener mZoomListener = new ZoomListener();
 
+    //
+    // DefaultHashMap is a HashMap which returns a default value if the specified
+    // key is not found.
+    //
+    @SuppressWarnings("serial")
+
+    static class DefaultHashMap<K, V> extends HashMap<K, V> {
+        private V mDefaultValue;
+
+        public void putDefault(V defaultValue) {
+            mDefaultValue = defaultValue;
+        }
+
+        @Override
+        public V get(Object key) {
+            V value = super.get(key);
+            return (value == null) ? mDefaultValue : value;
+        }
+
+        public K getKey(V toCheck) {
+            Iterator<K> it = this.keySet().iterator();
+            V val;
+            K key;
+            while(it.hasNext()) {
+                key = it.next();
+                val = this.get(key);
+                if (val.equals(toCheck)) {
+                    return key;
+                }
+            }
+        return null;
+        }
+    }
+
+
+    private static final DefaultHashMap<String, Integer>
+            OUTPUT_FORMAT_TABLE = new DefaultHashMap<String, Integer>();
+    private static final DefaultHashMap<String, Integer>
+            VIDEO_ENCODER_TABLE = new DefaultHashMap<String, Integer>();
+    private static final DefaultHashMap<String, Integer>
+            AUDIO_ENCODER_TABLE = new DefaultHashMap<String, Integer>();
+    private static final DefaultHashMap<String, Integer>
+            VIDEOQUALITY_BITRATE_TABLE = new DefaultHashMap<String, Integer>();
+
+    static {
+        OUTPUT_FORMAT_TABLE.put("3gp", MediaRecorder.OutputFormat.THREE_GPP);
+        OUTPUT_FORMAT_TABLE.put("mp4", MediaRecorder.OutputFormat.MPEG_4);
+        OUTPUT_FORMAT_TABLE.putDefault(MediaRecorder.OutputFormat.DEFAULT);
+
+        VIDEO_ENCODER_TABLE.put("h263", MediaRecorder.VideoEncoder.H263);
+        VIDEO_ENCODER_TABLE.put("h264", MediaRecorder.VideoEncoder.H264);
+        VIDEO_ENCODER_TABLE.put("m4v", MediaRecorder.VideoEncoder.MPEG_4_SP);
+        VIDEO_ENCODER_TABLE.putDefault(MediaRecorder.VideoEncoder.DEFAULT);
+
+        AUDIO_ENCODER_TABLE.put("amrnb", MediaRecorder.AudioEncoder.AMR_NB);
+        AUDIO_ENCODER_TABLE.put("qcelp", MediaRecorder.AudioEncoder.QCELP);
+        AUDIO_ENCODER_TABLE.put("evrc", MediaRecorder.AudioEncoder.EVRC);
+        AUDIO_ENCODER_TABLE.put("amrwb", MediaRecorder.AudioEncoder.AMR_WB);
+        AUDIO_ENCODER_TABLE.put("aac", MediaRecorder.AudioEncoder.AAC);
+        AUDIO_ENCODER_TABLE.put("aacplus", MediaRecorder.AudioEncoder.AAC_PLUS);
+        AUDIO_ENCODER_TABLE.put("eaacplus",
+                MediaRecorder.AudioEncoder.EAAC_PLUS);
+        AUDIO_ENCODER_TABLE.putDefault(MediaRecorder.AudioEncoder.DEFAULT);
+    }
+
     private int mVideoEncoder;
     private int mAudioEncoder;
     // This Handler is used to post message back onto the main thread of the
@@ -755,6 +820,10 @@ public class VideoCamera extends ActivityBase
         String audioEncoder = mPreferences.getString(
                         CameraSettings.KEY_AUDIO_ENCODER,
                         getString(R.string.pref_camera_audioencoder_default));
+
+        mVideoEncoder = VIDEO_ENCODER_TABLE.get(videoEncoder);
+        mAudioEncoder = AUDIO_ENCODER_TABLE.get(audioEncoder);
+
         // Read time lapse recording interval.
         String frameIntervalStr = mPreferences.getString(
                 CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
@@ -1193,6 +1262,13 @@ public class VideoCamera extends ActivityBase
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
         }
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+
+        mProfile.audioCodec = mAudioEncoder;
+        mProfile.videoCodec = mVideoEncoder;
+
+        Log.v(TAG, "Audio Encoder type" + mAudioEncoder);
+        Log.v(TAG, "Video Encoder type" + mVideoEncoder);
+
         mMediaRecorder.setProfile(mProfile);
         mMediaRecorder.setMaxDuration(mMaxVideoDurationInMs);
         if (mCaptureTimeLapse) {
