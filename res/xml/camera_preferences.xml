@@ -149,4 +149,10 @@
                 camera:title="@string/pref_camera_skinToneEnhancement_title"
                 camera:entries="@array/pref_camera_skinToneEnhancement_entries"
                 camera:entryValues="@array/pref_camera_skinToneEnhancement_entryvalues" />
+         <ListPreference
+                camera:key="pref_camera_facedetection_key"
+                camera:defaultValue="@string/pref_camera_facedetection_default"
+                camera:title="@string/pref_camera_facedetection_title"
+                camera:entries="@array/pref_camera_facedetection_entries"
+                camera:entryValues="@array/pref_camera_facedetection_entryvalues" />
 </PreferenceGroup>

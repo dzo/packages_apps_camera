@@ -133,6 +133,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private static final int UPDATE_PARAM_ZOOM = 2;
     private static final int UPDATE_PARAM_PREFERENCE = 4;
     private static final int UPDATE_PARAM_ALL = -1;
+    private static final int FACE_DETECTION_OFF = 0;
+    private static final int FACE_DETECTION_ON = 1;
+    public static int mFaceDetect = FACE_DETECTION_OFF;
 
     // When setCameraParametersWhenIdle() is called, we accumulate the subsets
     // needed to be updated in mUpdateSet.
@@ -591,15 +594,21 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mFaceView.setMirror(info.facing == CameraInfo.CAMERA_FACING_FRONT);
             mFaceView.resume();
             mCameraDevice.setFaceDetectionListener(this);
-            mCameraDevice.startFaceDetection();
+            if (mFaceDetect == FACE_DETECTION_OFF) {
+              mCameraDevice.startFaceDetection();
+              mFaceDetect = FACE_DETECTION_ON;
+          }
         }
-    }
+     }
 
     @Override
     public void stopFaceDetection() {
         if (mParameters.getMaxNumDetectedFaces() > 0) {
             mCameraDevice.setFaceDetectionListener(null);
+          if (mFaceDetect == FACE_DETECTION_ON) {
             mCameraDevice.stopFaceDetection();
+            mFaceDetect = FACE_DETECTION_OFF;
+          }
             if (mFaceView != null) mFaceView.clear();
         }
     }
@@ -2226,7 +2235,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
          if (isSupported(selectableZoneAf, mParameters.getSupportedSelectableZoneAf())) {
              mParameters.setSelectableZoneAf(selectableZoneAf);
          }
-
+*/
          // Set face detetction parameter.
          String faceDetection = mPreferences.getString(
              CameraSettings.KEY_FACE_DETECTION,
@@ -2234,16 +2243,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
          if (isSupported(faceDetection, mParameters.getSupportedFaceDetectionModes())) {
              mParameters.setFaceDetectionMode(faceDetection);
-             if(faceDetection.equals(Parameters.FACE_DETECTION_ON)) {
-                 mCameraDevice.setFaceDetectionCb(mMetaDataCallback);
-                 mFaceDetect = FACE_DETECTION_ON; 
+             if(faceDetection.equals("on")) {
+               startFaceDetection();
              } else {
-                 mCameraDevice.setFaceDetectionCb(null);
-                 clearFaceRectangles();
-                 mFaceDetect = FACE_DETECTION_OFF;
+               stopFaceDetection();
              }
          }
-*/
 
         // Set sharpness parameter.
         String sharpnessStr = mPreferences.getString(

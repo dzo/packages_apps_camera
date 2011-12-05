@@ -532,6 +532,17 @@
         <item>backdropper/gallery</item>
     </string-array>
 
+    <!-- Camera Preferences Face Detection dialog box entries -->
+    <string-array name="pref_camera_facedetection_entries">
+         <item>@string/pref_camera_facedetection_entry_off</item>
+         <item>@string/pref_camera_facedetection_entry_on</item>
+    </string-array>
+
+    <string-array name="pref_camera_facedetection_entryvalues" translatable="false">
+        <item>off</item>
+        <item>on</item>
+    </string-array>
+
     <!-- Camera Preferences Wavelet Denoise dialog box entries -->
     <string-array name="pref_camera_denoise_entryvalues" translatable="false">
         <item>denoise-off</item>
