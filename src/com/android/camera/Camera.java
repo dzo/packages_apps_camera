@@ -51,6 +51,7 @@ import android.os.MessageQueue;
 import android.os.SystemClock;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -81,6 +82,12 @@ import java.util.Formatter;
 import java.util.List;
 
 import java.util.HashMap;
+
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Paint.Align;
+
 
 /** The Camera activity which can preview and take pictures. */
 public class Camera extends ActivityBase implements FocusManager.Listener,
@@ -116,6 +123,14 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             CameraSettings.KEY_HISTOGRAM,
             CameraSettings.KEY_DENOISE
         };
+    /*Histogram variables*/
+    private GraphView mGraphView;
+    private static final int STATS_DATA = 257;
+    public static int statsdata[] = new int[STATS_DATA];
+    public static boolean mHiston = false;
+    public static boolean mBrightnessVisible = true;
+
+
     public HashMap otherSettingKeys = new HashMap(2);
     private static final int CROP_MSG = 1;
     private static final int FIRST_TIME_INIT = 2;
@@ -270,6 +285,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             new RawPictureCallback();
     private final AutoFocusCallback mAutoFocusCallback =
             new AutoFocusCallback();
+    private final StatsCallback mStatsCallback = new StatsCallback();
     private final ZoomListener mZoomListener = new ZoomListener();
     private final CameraErrorCallback mErrorCallback = new CameraErrorCallback();
 
@@ -452,6 +468,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         mImageSaver = new ImageSaver();
         Util.initializeScreenBrightness(getWindow(), getContentResolver());
         installIntentFilter();
+        mGraphView = (GraphView)findViewById(R.id.graph_view);
+        if(mGraphView == null)
+            Log.e(TAG, "mGraphView is null");
+        mGraphView.setCameraObject(Camera.this);
+
         initializeZoom();
         startFaceDetection();
         // Show the tap to focus toast if this is the first start.
@@ -513,6 +534,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         keepMediaProviderInstance();
         checkStorage();
         hidePostCaptureAlert();
+
+        if(mGraphView != null)
+          mGraphView.setCameraObject(Camera.this);
 
         if (!mIsImageCaptureIntent) {
             updateThumbnailButton();
@@ -718,6 +742,23 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mShutterLag = mShutterCallbackTime - mCaptureStartTime;
             Log.v(TAG, "mShutterLag = " + mShutterLag + "ms");
             mFocusManager.onShutter();
+        }
+    }
+
+    private final class StatsCallback
+           implements android.hardware.Camera.CameraDataCallback {
+        public void onCameraData(int [] data, android.hardware.Camera camera) {
+            //if(!mPreviewing || !mHiston || !mFirstTimeInitialized){
+            if(!mHiston || !mFirstTimeInitialized){
+                return;
+            }
+            /*The first element in the array stores max hist value . Stats data begin from second value*/
+            synchronized(statsdata) {
+                System.arraycopy(data,0,statsdata,0,STATS_DATA);
+            }
+            if(mGraphView != null) {
+                mGraphView.PreviewChanged();
+            }
         }
     }
 
@@ -1090,6 +1131,13 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         Location loc = mLocationManager.getCurrentLocation();
         Util.setGpsParameters(mParameters, loc);
         mCameraDevice.setParameters(mParameters);
+
+        if(mHiston) {
+            mHiston = false;
+            mCameraDevice.setHistogramMode(null);
+            if(mGraphView != null)
+                mGraphView.setVisibility(View.INVISIBLE);
+        }
 
         mCameraDevice.takePicture(mShutterCallback, mRawPictureCallback,
                 mPostViewPictureCallback, new JpegPictureCallback(loc));
@@ -1651,6 +1699,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     @Override
     protected void onPause() {
         mPausing = true;
+        if(mGraphView != null)
+            mGraphView.setCameraObject(null);
+
         stopPreview();
         // Close the camera now because other activities may need to use it.
         closeCamera();
@@ -1723,6 +1774,10 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private boolean canTakePicture() {
         return isCameraIdle() && (mPicturesRemaining > 0);
+    }
+
+    protected android.hardware.Camera getCamera() {
+        return mCameraDevice;
     }
 
     @Override
@@ -2064,7 +2119,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         Size size = mParameters.getPictureSize();
         Log.v(TAG, "New picture size : "+ size.width + " " + size.height);
         if(!size.equals(old_size)){
-            Log.v(TAG, "sravank : new picture size id different from old picture size , restart..");
+            Log.v(TAG, "new picture size id different from old picture size , restart..");
             mAspectRatioChanged = true;
         }
 
@@ -2156,7 +2211,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 mParameters.getSupportedMemColorEnhanceModes())) {
                 mParameters.setMemColorEnhance(mce);
         }
-
+*/
         //Set Histogram
         String histogram = mPreferences.getString(
                 CameraSettings.KEY_HISTOGRAM,
@@ -2177,7 +2232,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                         mGraphView.setVisibility(View.INVISIBLE);
                      mCameraDevice.setHistogramMode(null);
                 }
-        }*/
+        }
         //Set Brightness.
         mParameters.set("luma-adaptation", String.valueOf(mbrightness));
 
@@ -2752,3 +2807,92 @@ class JpegEncodingQualityMappings {
         return CameraProfile.getJpegEncodingQualityParameter(quality.intValue());
     }
 }
+//-------------
+ //Graph View Class
+
+class GraphView extends View {
+    private Bitmap  mBitmap;
+    private Paint   mPaint = new Paint();
+    private Canvas  mCanvas = new Canvas();
+    private float   mScale = (float)3;
+    private float   mWidth;
+    private float   mHeight;
+    private Camera mCamera;
+    private android.hardware.Camera mGraphCameraDevice;
+    private float scaled;
+    private static final int STATS_SIZE = 256;
+    private static final String TAG = "GraphView";
+
+
+    public GraphView(Context context, AttributeSet attrs) {
+        super(context,attrs);
+
+        mPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
+    }
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        mBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.RGB_565);
+        mCanvas.setBitmap(mBitmap);
+        mWidth = w;
+        mHeight = h;
+        super.onSizeChanged(w, h, oldw, oldh);
+    }
+    @Override
+    protected void onDraw(Canvas canvas) {
+        Log.v(TAG, "in Camera.java ondraw");
+        if(!Camera.mHiston ) {
+            Log.e(TAG, "returning as histogram is off ");
+            return;
+        }
+    if (mBitmap != null) {
+        final Paint paint = mPaint;
+        final Canvas cavas = mCanvas;
+        final float border = 5;
+        float graphheight = mHeight - (2 * border);
+        float graphwidth = mWidth - (2 * border);
+        float left,top,right,bottom;
+        float bargap = 0.0f;
+        float barwidth = 1.0f;
+
+        cavas.drawColor(0xFFAAAAAA);
+        paint.setColor(Color.BLACK);
+
+        for (int k = 0; k <= (graphheight /32) ; k++) {
+            float y = (float)(32 * k)+ border;
+            cavas.drawLine(border, y, graphwidth + border , y, paint);
+        }
+        for (int j = 0; j <= (graphwidth /32); j++) {
+            float x = (float)(32 * j)+ border;
+            cavas.drawLine(x, border, x, graphheight + border, paint);
+        }
+        paint.setColor(0xFFFFFFFF);
+        synchronized(Camera.statsdata) {
+            for(int i=1 ; i<=STATS_SIZE ; i++)  {
+                scaled = Camera.statsdata[i]/mScale;
+                if(scaled >= (float)STATS_SIZE)
+                    scaled = (float)STATS_SIZE;
+                left = (bargap * (i+1)) + (barwidth * i) + border;
+                top = graphheight + border;
+                right = left + barwidth;
+                bottom = top - scaled;
+                cavas.drawRect(left, top, right, bottom, paint);
+            }
+        }
+        canvas.drawBitmap(mBitmap, 0, 0, null);
+
+    }
+        if(Camera.mHiston && mCamera!= null) {
+            mGraphCameraDevice = mCamera.getCamera();
+        if(mGraphCameraDevice != null)
+            mGraphCameraDevice.sendHistogramData();
+        }
+    }
+    public void PreviewChanged() {
+ Log.e(TAG, "sravank in previewChanged graphview");
+        invalidate();
+    }
+    public void setCameraObject(Camera camera) {
+        mCamera = camera;
+    }
+}
+
