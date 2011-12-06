@@ -105,18 +105,20 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             CameraSettings.KEY_PICTURE_FORMAT,
             CameraSettings.KEY_COLOR_EFFECT,
             CameraSettings.KEY_SATURATION,
-            CameraSettings.KEY_CONTRAST,
-            CameraSettings.KEY_SHARPNESS,
-            CameraSettings.KEY_ISO,
-            CameraSettings.KEY_ANTIBANDING
+            CameraSettings.KEY_CONTRAST
          };
-    private static final String[] OTHER_SETTING_KEYS_EXTRA = {
+    private static final String[] OTHER_SETTING_KEYS_1 = {
             CameraSettings.KEY_AUTOEXPOSURE,
-            CameraSettings.KEY_FOCUS_MODE,
+            CameraSettings.KEY_ANTIBANDING,
             CameraSettings.KEY_SCENE_DETECT,
             CameraSettings.KEY_TOUCH_AF_AEC,
             CameraSettings.KEY_SKIN_TONE_ENHANCEMENT,
             CameraSettings.KEY_SELECTABLE_ZONE_AF,
+            CameraSettings.KEY_SHARPNESS
+        };
+    private static final String[] OTHER_SETTING_KEYS_2 = {
+            CameraSettings.KEY_ISO,
+            CameraSettings.KEY_FOCUS_MODE,
             CameraSettings.KEY_LENSSHADING,
             CameraSettings.KEY_MEMORY_COLOR_ENHANCEMENT,
             CameraSettings.KEY_FACE_DETECTION,
@@ -130,8 +132,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     public static boolean mHiston = false;
     public static boolean mBrightnessVisible = true;
 
-
-    public HashMap otherSettingKeys = new HashMap(2);
+    public HashMap otherSettingKeys = new HashMap(3);
     private static final int CROP_MSG = 1;
     private static final int FIRST_TIME_INIT = 2;
     private static final int CLEAR_SCREEN_DELAY = 3;
@@ -1341,7 +1342,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         if (mIndicatorControlContainer == null) return;
         loadCameraPreferences();
         otherSettingKeys.put(0, OTHER_SETTING_KEYS);
-        otherSettingKeys.put(1, OTHER_SETTING_KEYS_EXTRA);
+        otherSettingKeys.put(1, OTHER_SETTING_KEYS_1);
+        otherSettingKeys.put(2, OTHER_SETTING_KEYS_2);
         final String[] SETTING_KEYS = {
                 CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_WHITE_BALANCE,
