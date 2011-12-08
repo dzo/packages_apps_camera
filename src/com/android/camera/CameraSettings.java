@@ -256,10 +256,10 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
             filterUnsupportedOptions(group,
                     hdr, mParameters.getSupportedHighDynamicRangeImagingModes());
         }*/
-        /*if (histogram!= null) {
+        if (histogram!= null) {
             filterUnsupportedOptions(group,
                     histogram, mParameters.getSupportedHistogramModes());
-        }*/
+        }
         if (skinToneEnhancement!= null) {
             filterUnsupportedOptions(group,
                     skinToneEnhancement, mParameters.getSupportedSkinToneEnhancementModes());
