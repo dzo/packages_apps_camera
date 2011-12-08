@@ -21,10 +21,8 @@
         <item>@string/pref_video_quality_entry_1080p</item>
         <item>@string/pref_video_quality_entry_720p</item>
         <item>@string/pref_video_quality_entry_480p</item>
-        <item>@string/pref_video_quality_entry_fwvga</item>
         <item>@string/pref_video_quality_entry_wvga</item>
         <item>@string/pref_video_quality_entry_vga</item>
-        <item>@string/pref_video_quality_entry_wqvga</item>
         <item>@string/pref_video_quality_entry_cif</item>
         <item>@string/pref_video_quality_entry_qvga</item>
         <item>@string/pref_video_quality_entry_qcif</item>
@@ -37,25 +35,21 @@
         <item>5</item>
         <!-- The integer value of CamcorderProfile.QUALITY_480P -->
         <item>4</item>
-        <item>7</item>
         <item>8</item>
         <item>9</item>
-        <item>10</item>
         <item>@string/pref_video_quality_default</item>
-        <item>11</item>
-        <item>2</item> </string-array>
+        <item>10</item>
+        <item>2</item></string-array>
 
     <array name="video_quality_largeicons" translatable="false">
         <item>@drawable/ic_viewfinder_video_quality_1080p</item>
         <item>@drawable/ic_viewfinder_video_quality_720p</item>
         <item>@drawable/ic_viewfinder_video_quality_480p</item>
-        <item>@drawable/ic_viewfinder_video_quality_1080p</item>
-        <item>@drawable/ic_viewfinder_video_quality_1080p</item>
-        <item>@drawable/ic_viewfinder_video_quality_1080p</item>
-        <item>@drawable/ic_viewfinder_video_quality_1080p</item>
-        <item>@drawable/ic_viewfinder_video_quality_1080p</item>
-        <item>@drawable/ic_viewfinder_video_quality_1080p</item>
-        <item>@drawable/ic_viewfinder_video_quality_1080p</item>
+        <item>@drawable/ic_menu_done_holo_light</item>
+        <item>@drawable/ic_menu_done_holo_light</item>
+        <item>@drawable/ic_menu_done_holo_light</item>
+        <item>@drawable/ic_menu_done_holo_light</item>
+        <item>@drawable/ic_menu_done_holo_light</item>
     </array>
 
     <!-- Video Preferences Time Lapse Frame Interval icons -->
