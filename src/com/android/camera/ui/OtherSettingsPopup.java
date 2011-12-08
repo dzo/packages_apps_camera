@@ -149,6 +149,8 @@ public class OtherSettingsPopup extends AbstractSettingPopup
             if (pref != null) {
                 InLineSettingItem settingItem =
                         (InLineSettingItem) mSettingList.getChildAt(i);
+                //Intialize mPreferences before you reload preferences.
+                settingItem.initialize(pref);
                 settingItem.reloadPreference();
             }
         }

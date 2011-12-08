@@ -631,29 +631,69 @@
     <!-- Settings screen, Audio encoder dialog radio button choices -->
     <string name="pref_camera_audioencoder_entry_0">AMRNB</string>
     <string name="pref_camera_audioencoder_entry_1">AAC</string>
+    <!-- Default video duration setting. A numerical value.-->
+    <string name="pref_camera_video_duration_default" translatable="false">10</string>
 
-     <!-- Default Skin Tone Enhancement setting. Do not translate. -->
-     <string name="pref_camera_skinToneEnhancement_default">disable</string>
+    <!-- Settings screen, Video duration title -->
+    <string name="pref_camera_video_duration_title">Video duration</string>
 
-     <!-- Settings screen, Select Skin Tone Enhancement title -->
-     <string name="pref_camera_skinToneEnhancement_title">Skin Tone Enhancement</string>
+    <!-- Settings screen, Video duration dialog radio button choices -->
+    <string name="pref_camera_video_duration_entry_mms">30 seconds(MMS)</string>
+    <string name="pref_camera_video_duration_entry_10">10 minutes</string>
+    <string name="pref_camera_video_duration_entry_30">30 minutes</string>
 
-     <!-- Settings screen, Skin Tone Enhancement radio button choices -->
-     <string name="pref_camera_skinToneEnhancement_entry_enable">Enable</string>
-     <string name="pref_camera_skinToneEnhancement_entry_disable">Disable</string>
+    <!-- Default Skin Tone Enhancement setting. Do not translate. -->
+    <string name="pref_camera_skinToneEnhancement_default">disable</string>
 
-     <!-- Skin Tone Enhancement entry values. Do not translate. -->
-     <string name="pref_camera_skinToneEnhancement_value_enable">enable</string>
-     <string name="pref_camera_skinToneEnhancement_value_disable">disable</string>
-              <!-- Default face  detection setting. -->
-     <string name="pref_camera_facedetection_default" translatable="false">off</string>
+    <!-- Settings screen, Select Skin Tone Enhancement title -->
+    <string name="pref_camera_skinToneEnhancement_title">Skin Tone Enhancement</string>
 
-     <!-- Settings screen, Select Face Detection -->
-     <string name="pref_camera_facedetection_title">Face Detection</string>
+    <!-- Settings screen, Skin Tone Enhancement radio button choices -->
+    <string name="pref_camera_skinToneEnhancement_entry_enable">Enable</string>
+    <string name="pref_camera_skinToneEnhancement_entry_disable">Disable</string>
 
-     <!-- Settings menu, Face Detection choices -->
-     <string name="pref_camera_facedetection_entry_off">Off</string>
-     <string name="pref_camera_facedetection_entry_on">On</string>
+    <!-- Skin Tone Enhancement entry values. Do not translate. -->
+    <string name="pref_camera_skinToneEnhancement_value_enable">enable</string>
+    <string name="pref_camera_skinToneEnhancement_value_disable">disable</string>
+    <!-- Settings screen, setting title text for ZSL-->
+    <string name="pref_camera_zsl_title">ZSL</string>
+
+    <string name="pref_camera_zsl_default" translatable="false">off</string>
+
+         <!-- Default selectable zone af setting. Do not translate. -->
+     <string name="pref_camera_selectablezoneaf_default">auto</string>
+
+     <!-- Settings screen, Selectable zone af title -->
+     <string name="pref_camera_selectablezoneaf_title"> Selectable Zone Auto Focus</string>
+
+     <!-- Settings screen, Selectable Zone Af dialog radio button choices -->
+     <string name="pref_camera_selectablezoneaf_entry_auto">Auto</string>
+     <string name="pref_camera_selectablezoneaf_entry_spotmetering">Spot Metering</string>
+     <string name="pref_camera_selectablezoneaf_entry_centerweighted">Center Weighted</string>
+     <string name="pref_camera_selectablezoneaf_entry_frameaverage">Frame Average</string>
+
+     <!-- Auto exposure entry values. Do not translate. -->
+     <string name="pref_camera_selectablezoneaf_value_auto">auto</string>
+     <string name="pref_camera_selectablezoneaf_value_spotmetering">spot-metering</string>
+     <string name="pref_camera_selectablezoneaf_value_centerweighted">center-weighted</string>
+     <string name="pref_camera_selectablezoneaf_value_frameaverage">frame-average</string>
+
+    <!-- Settings screen, ZSL location dialog choices -->
+    <string name="pref_camera_zsl_entry_off">Off</string>
+    <string name="pref_camera_zsl_entry_on">On</string>
+
+    <string name="pref_camera_zsl_value_off">off</string>
+    <string name="pref_camera_zsl_value_on">on</string>
+
+    <!-- Default face  detection setting. -->
+    <string name="pref_camera_facedetection_default" translatable="false">off</string>
+
+    <!-- Settings screen, Select Face Detection -->
+    <string name="pref_camera_facedetection_title">Face Detection</string>
+
+    <!-- Settings menu, Face Detection choices -->
+    <string name="pref_camera_facedetection_entry_off">Off</string>
+    <string name="pref_camera_facedetection_entry_on">On</string>
 
      <!-- Default redeye reduction setting. -->
      <string name="pref_camera_redeyereduction_default" translatable="false">disable</string>

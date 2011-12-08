@@ -168,4 +168,16 @@
                 camera:entries="@array/pref_camera_redeyereduction_entries"
                 camera:entryValues="@array/pref_camera_redeyereduction_entryvalues" />
 
+          <ListPreference
+                camera:key="pref_camera_selectablezoneaf_key"
+                camera:defaultValue="@string/pref_camera_selectablezoneaf_default"
+                camera:title="@string/pref_camera_selectablezoneaf_title"
+                camera:entries="@array/pref_camera_selectablezoneaf_entries"
+                camera:entryValues="@array/pref_camera_selectablezoneaf_entryvalues" />
+         <ListPreference
+                camera:key="pref_camera_zsl_key"
+                camera:defaultValue="@string/pref_camera_zsl_default"
+                camera:title="@string/pref_camera_zsl_title"
+                camera:entries="@array/pref_camera_zsl_entries"
+                camera:entryValues="@array/pref_camera_zsl_entryvalues" />
 </PreferenceGroup>

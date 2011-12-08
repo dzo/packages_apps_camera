@@ -95,7 +95,9 @@ public class VideoCamera extends ActivityBase
     private static final String[] OTHER_SETTING_KEYS = {
                     CameraSettings.KEY_RECORD_LOCATION,
                     CameraSettings.KEY_VIDEO_ENCODER,
-                    CameraSettings.KEY_AUDIO_ENCODER
+                    CameraSettings.KEY_AUDIO_ENCODER,
+                    CameraSettings.KEY_VIDEO_DURATION,
+                    CameraSettings.KEY_COLOR_EFFECT,
         };
     public HashMap otherSettingKeys = new HashMap(2);
 
@@ -571,7 +573,7 @@ public class VideoCamera extends ActivityBase
                     CameraSettings.KEY_VIDEO_EFFECT,
                     CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
                     CameraSettings.KEY_VIDEO_QUALITY};
-        
+
         CameraPicker.setImageResourceId(R.drawable.ic_switch_video_facing_holo_light);
         otherSettingKeys.put(0,OTHER_SETTING_KEYS);
         mIndicatorControlContainer.initialize(this, mPreferenceGroup,
@@ -762,8 +764,8 @@ public class VideoCamera extends ActivityBase
         String defaultQuality = CameraSettings.getDefaultVideoQuality(mCameraId,
                 getResources().getString(R.string.pref_video_quality_default));
         String videoQuality =
-                mPreferences.getString(CameraSettings.KEY_VIDEO_QUALITY,
-                        defaultQuality);
+            mPreferences.getString(CameraSettings.KEY_VIDEO_QUALITY,
+                    defaultQuality);
 
         int quality = Integer.valueOf(videoQuality);
 
@@ -771,7 +773,7 @@ public class VideoCamera extends ActivityBase
         Intent intent = getIntent();
         if (intent.hasExtra(MediaStore.EXTRA_VIDEO_QUALITY)) {
             int extraVideoQuality =
-                    intent.getIntExtra(MediaStore.EXTRA_VIDEO_QUALITY, 0);
+                intent.getIntExtra(MediaStore.EXTRA_VIDEO_QUALITY, 0);
             if (extraVideoQuality > 0) {
                 quality = CamcorderProfile.QUALITY_HIGH;
             } else {  // 0 is mms.
@@ -783,7 +785,7 @@ public class VideoCamera extends ActivityBase
         // unless it is specified in the intent.
         if (intent.hasExtra(MediaStore.EXTRA_DURATION_LIMIT)) {
             int seconds =
-                    intent.getIntExtra(MediaStore.EXTRA_DURATION_LIMIT, 0);
+                intent.getIntExtra(MediaStore.EXTRA_DURATION_LIMIT, 0);
             mMaxVideoDurationInMs = 1000 * seconds;
         } else {
             mMaxVideoDurationInMs = CameraSettings.DEFAULT_VIDEO_DURATION;
@@ -814,21 +816,42 @@ public class VideoCamera extends ActivityBase
             }
         }
         String videoEncoder = mPreferences.getString(
-                        CameraSettings.KEY_VIDEO_ENCODER,
-                        getString(R.string.pref_camera_videoencoder_default));
+                CameraSettings.KEY_VIDEO_ENCODER,
+                getString(R.string.pref_camera_videoencoder_default));
 
         String audioEncoder = mPreferences.getString(
-                        CameraSettings.KEY_AUDIO_ENCODER,
-                        getString(R.string.pref_camera_audioencoder_default));
+                CameraSettings.KEY_AUDIO_ENCODER,
+                getString(R.string.pref_camera_audioencoder_default));
 
         mVideoEncoder = VIDEO_ENCODER_TABLE.get(videoEncoder);
         mAudioEncoder = AUDIO_ENCODER_TABLE.get(audioEncoder);
+        String minutesStr = mPreferences.getString(CameraSettings.KEY_VIDEO_DURATION,
+                getString(R.string.pref_camera_video_duration_default));
+
+        int minutes = -1;
+        try{
+            minutes = Integer.parseInt(minutesStr);
+        }catch(NumberFormatException npe){
+            // use default value continue
+            minutes = Integer.parseInt(getString(R.string.pref_camera_video_duration_default));
+        }
+
+        if (minutes == -1) {
+            // This is a special case: the value -1 means we want to use the
+            // device-dependent duration for MMS messages. The value is
+            // represented in seconds.
+            mMaxVideoDurationInMs = CameraSettings.getVidoeDurationInMillis("mms");
+
+        } else {
+            // 1 minute = 60000ms
+            mMaxVideoDurationInMs = 60000 * minutes;
+        }
 
         // Read time lapse recording interval.
         String frameIntervalStr = mPreferences.getString(
                 CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
                 getString(R.string.pref_video_time_lapse_frame_interval_default));
-        mTimeBetweenTimeLapseFrameCaptureMs = Integer.parseInt(frameIntervalStr);
+        mTimeBetweenTimeLapseFrameCaptureMs = 0;//Integer.parseInt(frameIntervalStr);
 
         mCaptureTimeLapse = (mTimeBetweenTimeLapseFrameCaptureMs != 0);
         // TODO: This should be checked instead directly +1000.
@@ -1265,6 +1288,7 @@ public class VideoCamera extends ActivityBase
 
         mProfile.audioCodec = mAudioEncoder;
         mProfile.videoCodec = mVideoEncoder;
+        mProfile.duration = mMaxVideoDurationInMs;
 
         Log.v(TAG, "Audio Encoder type" + mAudioEncoder);
         Log.v(TAG, "Video Encoder type" + mVideoEncoder);
@@ -2006,6 +2030,16 @@ public class VideoCamera extends ActivityBase
                 CameraProfile.QUALITY_HIGH);
         mParameters.setJpegQuality(jpegQuality);
 
+
+        // Set color effect parameter.
+        String colorEffect = mPreferences.getString(
+                CameraSettings.KEY_COLOR_EFFECT,
+                getString(R.string.pref_camera_coloreffect_default));
+        Log.e(TAG, "New effect =" + colorEffect);
+        if (isSupported(colorEffect, mParameters.getSupportedColorEffects())) {
+            mParameters.setColorEffect(colorEffect);
+        }
+
         mCameraDevice.setParameters(mParameters);
         // Keep preview size up to date.
         mParameters = mCameraDevice.getParameters();
@@ -2099,6 +2133,7 @@ public class VideoCamera extends ActivityBase
     @Override
     public void onConfigurationChanged(Configuration config) {
         super.onConfigurationChanged(config);
+        resizeForPreviewAspectRatio();
     }
 
     public void onOverriddenPreferencesClicked() {
@@ -2439,8 +2474,8 @@ public class VideoCamera extends ActivityBase
         String title = Util.createJpegName(dateTaken);
         int orientation = Exif.getOrientation(data);
         Size s = mParameters.getPictureSize();
-        Uri uri = Storage.addImage(mContentResolver, title, dateTaken, loc, orientation, data,
-                s.width, s.height,".jpg");
+        Uri uri = Storage.addImage(mContentResolver, title, null,
+                dateTaken, loc, orientation, data, s.width, s.height);
         if (uri != null) {
             // Create a thumbnail whose width is equal or bigger than that of the preview.
             int ratio = (int) Math.ceil((double) mParameters.getPictureSize().width

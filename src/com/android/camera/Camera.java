@@ -123,7 +123,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             CameraSettings.KEY_FACE_DETECTION,
             CameraSettings.KEY_HISTOGRAM,
             CameraSettings.KEY_DENOISE,
-            CameraSettings.KEY_REDEYE_REDUCTION
+            CameraSettings.KEY_REDEYE_REDUCTION,
+            CameraSettings.KEY_ZSL
         };
     /*Histogram variables*/
     private GraphView mGraphView;
@@ -176,6 +177,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private boolean mMeteringAreaSupported;
     private boolean mAeLockSupported;
     private boolean mAwbLockSupported;
+    private boolean mTouchAfAecFlag;
 
     private MyOrientationEventListener mOrientationListener;
     // The degrees of the device rotated clockwise from its natural orientation.
@@ -335,6 +337,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private TextView RightValue;
     private TextView Title;
 
+    private int mSnapshotMode;
+    private boolean zslrestartPreview;
 
     /**
      * This Handler is used to post message back onto the main thread of the
@@ -814,10 +818,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                     + mPictureDisplayedToJpegCallbackTime + "ms");
 
             if (!mIsImageCaptureIntent) {
-                enableCameraControls(true);
-
-                startPreview();
-                startFaceDetection();
+                    enableCameraControls(true);
+                    startPreview();
+                    startFaceDetection();
             }
 
             if (!mIsImageCaptureIntent) {
@@ -840,7 +843,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
             long now = System.currentTimeMillis();
             mJpegCallbackFinishTime = now - mJpegPictureCallbackTime;
-            Log.v(TAG, "mJpegCallbackFinishTime = "
+            Log.e(TAG, "mJpegCallbackFinishTime = "
                     + mJpegCallbackFinishTime + "ms");
             mJpegPictureCallbackTime = 0;
         }
@@ -1072,22 +1075,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         // Runs in saver thread
         private void storeImage(final byte[] data, Location loc, int width,
                 int height, long dateTaken, int previewWidth) {
-            String ext = null;
             String pictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
             String title = Util.createJpegName(dateTaken);
             int orientation = Exif.getOrientation(data);
 
-            if(pictureFormat == null ||
-                        PIXEL_FORMAT_JPEG.equalsIgnoreCase(pictureFormat)){
-                ext = ".jpg";
-            }
-
-            if(PIXEL_FORMAT_RAW.equalsIgnoreCase(pictureFormat)){
-                ext = ".raw";
-            }
-
-            Uri uri = Storage.addImage(mContentResolver, title, dateTaken,
-                    loc, orientation, data, width, height,ext);
+            Uri uri = Storage.addImage(mContentResolver, title, pictureFormat,
+                    dateTaken, loc, orientation, data, width, height);
             if (uri != null) {
                 boolean needThumbnail;
                 synchronized (this) {
@@ -1129,7 +1122,13 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         // Set rotation and gps data.
         Util.setRotationParameter(mParameters, mCameraId, mOrientation);
-        Location loc = mLocationManager.getCurrentLocation();
+        String pictureFormat = mParameters.get(KEY_PICTURE_FORMAT);
+        Location loc = null;
+        if (pictureFormat != null &&
+            PIXEL_FORMAT_JPEG.equalsIgnoreCase(pictureFormat)) {
+            loc = mLocationManager.getCurrentLocation();
+        }
+
         Util.setGpsParameters(mParameters, loc);
         mCameraDevice.setParameters(mParameters);
 
@@ -1143,6 +1142,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         mCameraDevice.takePicture(mShutterCallback, mRawPictureCallback,
                 mPostViewPictureCallback, new JpegPictureCallback(loc));
         mCameraState = SNAPSHOT_IN_PROGRESS;
+        if (mSnapshotMode == CameraInfo.CAMERA_SUPPORT_MODE_ZSL) {
+                zslrestartPreview = false;
+        }
         return true;
     }
 
@@ -1578,6 +1580,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
 
         mSnapshotOnIdle = false;
+        if(mSnapshotMode == CameraInfo.CAMERA_SUPPORT_MODE_ZSL) {
+            mFocusManager.setZslEnable(true);
+        }else{
+            mFocusManager.setZslEnable(false);
+        }
         mFocusManager.doSnap();
     }
 
@@ -1809,6 +1816,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         // Do not trigger touch focus if popup window is opened.
         if (collapseCameraControls()) return false;
 
+        //If Touch AF/AEC is disabled in UI, return
+        if(this.mTouchAfAecFlag == false) {
+            return false;
+        }
+
         // Check if metering area or focus area is supported.
         if (!mFocusAreaSupported && !mMeteringAreaSupported) return false;
 
@@ -2008,7 +2020,16 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         // If we're previewing already, stop the preview first (this will blank
         // the screen).
-        if (mCameraState != PREVIEW_STOPPED) stopPreview();
+        if (mCameraState != PREVIEW_STOPPED) 
+        {
+            // However, in ZSL mode, we would not want to stop the
+            // preview if app is trying to restartPreview after image capture.
+            // We'll have to stop preview only if there are some parameters
+            // change
+            if ((mSnapshotMode != CameraInfo.CAMERA_SUPPORT_MODE_ZSL) || zslrestartPreview ){
+                stopPreview();
+            }
+        }
 
         setPreviewDisplay(mSurfaceHolder);
         setDisplayOrientation();
@@ -2029,7 +2050,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
 
         try {
-            Log.v(TAG, "startPreview");
             mCameraDevice.startPreview();
         } catch (Throwable ex) {
             closeCamera();
@@ -2174,6 +2194,20 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 mSceneMode = Parameters.SCENE_MODE_AUTO;
             }
         }
+
+        String zsl = mPreferences.getString(CameraSettings.KEY_ZSL,
+                                  getString(R.string.pref_camera_zsl_default));
+        if(zsl.equals("on")) {
+            //Switch on ZSL mode
+            mSnapshotMode = CameraInfo.CAMERA_SUPPORT_MODE_ZSL;
+            mParameters.setCameraMode(1);
+            mFocusManager.setZslEnable(true);
+        }else{
+            mSnapshotMode = CameraInfo.CAMERA_SUPPORT_MODE_NONZSL;
+            mParameters.setCameraMode(0);
+            mFocusManager.setZslEnable(false);
+        }
+
         // Set JPEG quality.
         String jpegQuality = mPreferences.getString(
                 CameraSettings.KEY_JPEG_QUALITY,
@@ -2268,30 +2302,18 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             }
         }
 
-        /*// Set Touch AF/AEC parameter.
+        // Set Touch AF/AEC parameter.
         String touchAfAec = mPreferences.getString(
                  CameraSettings.KEY_TOUCH_AF_AEC,
                  getString(R.string.pref_camera_touchafaec_default));
          if (isSupported(touchAfAec, mParameters.getSupportedTouchAfAec())) {
-             if (touchAfAec.equals(Parameters.TOUCH_AF_AEC_ON)) {
-                 if (mFocusGestureDetector == null) {
-                     mFocusGestureDetector = new GestureDetector(this, new FocusGestureListener(), mHandler);
-
-                     //Setting the touch index to negative value to
-                     //indicate that a touch event has not occured yet
-                     mParameters.setTouchIndexAec(-1,-1);
-                     mParameters.setTouchIndexAf(-1,-1);
-                     mParameters.set("touchAfAec-dx",String.valueOf(100));
-                     mParameters.set("touchAfAec-dy",String.valueOf(100));
-                 }
-             }
-             else {
-                 if (mFocusRectangle != null)
-                     mFocusRectangle.clear();
-                 mFocusGestureDetector = null;
-             }
              mParameters.setTouchAfAec(touchAfAec);
          }
+
+         if(mParameters.getTouchAfAec().equals(mParameters.TOUCH_AF_AEC_ON))
+             this.mTouchAfAecFlag = true;
+         else
+             this.mTouchAfAecFlag = false;
 
          // Set Selectable Zone Af parameter.
          String selectableZoneAf = mPreferences.getString(
@@ -2301,7 +2323,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
          if (isSupported(selectableZoneAf, mParameters.getSupportedSelectableZoneAf())) {
              mParameters.setSelectableZoneAf(selectableZoneAf);
          }
-*/
+
          // Set face detetction parameter.
          String faceDetection = mPreferences.getString(
              CameraSettings.KEY_FACE_DETECTION,
@@ -2395,7 +2417,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         String pictureFormat = mPreferences.getString(
                 CameraSettings.KEY_PICTURE_FORMAT,
                 getString(R.string.pref_camera_picture_format_default));
-        Log.v(TAG, "Setting picture format in app: punits");
         mParameters.set(KEY_PICTURE_FORMAT, pictureFormat);
 
         if (Parameters.SCENE_MODE_AUTO.equals(mSceneMode)) {
@@ -2472,6 +2493,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mUpdateSet = 0;
             return;
         } else if (isCameraIdle()) {
+            if(zslrestartPreview){
+                Log.e(TAG, "ZSL enabled, restarting preview");
+                startPreview();
+                zslrestartPreview = false;
+            }
+
             setCameraParameters(mUpdateSet);
             updateSceneModeUI();
             mUpdateSet = 0;
@@ -2486,7 +2513,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             startPreview();
             mAspectRatioChanged = false;
         }
-    }
+     }
 
     private void gotoGallery() {
         MenuHelper.gotoCameraImageGallery(this);
@@ -2625,6 +2652,18 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
             finish();
         } else {
+            String zsl = mPreferences.getString(CameraSettings.KEY_ZSL,
+			    getString(R.string.pref_camera_zsl_default));
+            if((mSnapshotMode != CameraInfo.CAMERA_SUPPORT_MODE_ZSL &&
+                zsl.equals("on"))) {
+                Log.v(TAG, "Camera App Enabled ZSL. Restart Preview "+ zsl);
+                zslrestartPreview = true;
+            }
+            if((mSnapshotMode == CameraInfo.CAMERA_SUPPORT_MODE_ZSL &&
+                zsl.equals("off"))) {
+                Log.v(TAG, "Camera App Disabled ZSL. Restart Preview "+ zsl);
+                zslrestartPreview = true;
+            }
             setCameraParametersWhenIdle(UPDATE_PARAM_PREFERENCE);
         }
 

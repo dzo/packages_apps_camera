@@ -55,6 +55,7 @@ public class FocusManager {
     public static final int STATE_FAIL = 4; // Focus finishes and fails.
 
     private boolean mInitialized;
+    private boolean mZslEnabled = false;
     private boolean mFocusAreaSupported;
     private boolean mInLongPress;
     private boolean mLockAeAwbNeeded;
@@ -402,6 +403,7 @@ public class FocusManager {
                 mFocusMode = mParameters.getFocusMode();
             }
         }
+
         return mFocusMode;
     }
 
@@ -506,10 +508,16 @@ public class FocusManager {
     }
 
     private boolean needAutoFocusCall() {
+        if(mZslEnabled) {
+            return false;
+        }
         String focusMode = getFocusMode();
         return !(focusMode.equals(Parameters.FOCUS_MODE_INFINITY)
                 || focusMode.equals(Parameters.FOCUS_MODE_FIXED)
                  || focusMode.equals(Parameters.FOCUS_MODE_CONTINUOUS_PICTURE)
                 || focusMode.equals(Parameters.FOCUS_MODE_EDOF));
+    }
+    public void setZslEnable(boolean value) {
+        mZslEnabled = value;
     }
 }

@@ -85,11 +85,17 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
     public static final int CURRENT_VERSION = 5;
     public static final int CURRENT_LOCAL_VERSION = 2;
 
+    private static final int MMS_VIDEO_DURATION = (CamcorderProfile.get(CamcorderProfile.QUALITY_LOW) != null) ?
+                                                     CamcorderProfile.get(CamcorderProfile.QUALITY_LOW).duration :
+                                                     30;
+    private static final int YOUTUBE_VIDEO_DURATION = 15 * 60; // 15 mins
     public static final int DEFAULT_VIDEO_DURATION = 0; // no limit
 
     public static final String DEFAULT_VIDEO_QUALITY_VALUE = "custom";
     public static final String KEY_VIDEO_ENCODER = "pref_camera_videoencoder_key";
     public static final String KEY_AUDIO_ENCODER = "pref_camera_audioencoder_key";
+    public static final String KEY_VIDEO_DURATION = "pref_camera_video_duration_key";
+    public static final String KEY_ZSL = "pref_camera_zsl_key";
     private static final String TAG = "CameraSettings";
 
     private final Context mContext;
@@ -194,6 +200,7 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
         ListPreference denoise = group.findPreference(KEY_DENOISE);
 		
         ListPreference videoEffect = group.findPreference(KEY_VIDEO_EFFECT);
+        ListPreference zsl = group.findPreference(KEY_ZSL);
 
         // Since the screen could be loaded from different resources, we need
         // to check if the preference is available here
@@ -283,10 +290,10 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
             filterUnsupportedOptions(group,
                     touchAfAec, mParameters.getSupportedTouchAfAec());
         }*/
-        /*if (selectableZoneAf != null) {
+        if (selectableZoneAf != null) {
             filterUnsupportedOptions(group,
                     selectableZoneAf, mParameters.getSupportedSelectableZoneAf());
-        }*/
+        }
         /*if (faceDetection != null) {
             filterUnsupportedOptions(group,
                     faceDetection, mParameters.getSupportedFaceDetectionModes());
@@ -486,11 +493,11 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
     }
 
     public static int getVidoeDurationInMillis(String quality) {
-       /*if (VIDEO_QUALITY_MMS.equals(quality)) {
+        if (VIDEO_QUALITY_MMS.equals(quality)) {
             return MMS_VIDEO_DURATION * 1000;
         } else if (VIDEO_QUALITY_YOUTUBE.equals(quality)) {
             return YOUTUBE_VIDEO_DURATION * 1000;
-        }*/
+        }
         return DEFAULT_VIDEO_DURATION * 1000;
     }
 
