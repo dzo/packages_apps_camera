@@ -120,10 +120,10 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             CameraSettings.KEY_ISO,
             CameraSettings.KEY_FOCUS_MODE,
             CameraSettings.KEY_LENSSHADING,
-            CameraSettings.KEY_MEMORY_COLOR_ENHANCEMENT,
             CameraSettings.KEY_FACE_DETECTION,
             CameraSettings.KEY_HISTOGRAM,
-            CameraSettings.KEY_DENOISE
+            CameraSettings.KEY_DENOISE,
+            CameraSettings.KEY_REDEYE_REDUCTION
         };
     /*Histogram variables*/
     private GraphView mGraphView;
@@ -2212,8 +2212,17 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         if (isSupported(mce,
                 mParameters.getSupportedMemColorEnhanceModes())) {
                 mParameters.setMemColorEnhance(mce);
+        }*/
+
+        // Set Redeye Reduction
+        String redeyeReduction = mPreferences.getString(
+                CameraSettings.KEY_REDEYE_REDUCTION,
+                getString(R.string.pref_camera_redeyereduction_default));
+        if (isSupported(redeyeReduction,
+            mParameters.getSupportedRedeyeReductionModes())) {
+            mParameters.setRedeyeReductionMode(redeyeReduction);
         }
-*/
+
         //Set Histogram
         String histogram = mPreferences.getString(
                 CameraSettings.KEY_HISTOGRAM,

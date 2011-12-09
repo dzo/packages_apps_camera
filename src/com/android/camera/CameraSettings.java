@@ -295,10 +295,10 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
             filterUnsupportedOptions(group,
                     hfr, mParameters.getSupportedVideoHighFrameRateModes());
         }*/
-        /*if (redeyeReduction != null) {
+        if (redeyeReduction != null) {
             filterUnsupportedOptions(group,
                     redeyeReduction, mParameters.getSupportedRedeyeReductionModes());
-        }*/
+        }
         if (denoise != null) {
             filterUnsupportedOptions(group,
             denoise, mParameters.getSupportedDenoiseModes());
