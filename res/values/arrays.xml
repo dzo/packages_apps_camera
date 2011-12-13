@@ -184,16 +184,18 @@
     <!-- Camera Preferences focus mode dialog box entries -->
     <string-array name="pref_camera_focusmode_entries" translatable="false">
         <item>@string/pref_camera_focusmode_entry_auto</item>
-	<item>@string/pref_camera_focusmode_entry_normal</item>
+	    <item>@string/pref_camera_focusmode_entry_normal</item>
         <item>@string/pref_camera_focusmode_entry_infinity</item>
         <item>@string/pref_camera_focusmode_entry_macro</item>
+        <item>@string/pref_camera_focusmode_entry_continuous</item>
     </string-array>
 
     <string-array name="pref_camera_focusmode_entryvalues" translatable="false">
         <item>auto</item>
-	<item>normal</item>
+	    <item>normal</item>
         <item>infinity</item>
         <item>macro</item>
+        <item>continuous-picture</item>
     </string-array>
 
     <!-- Camera Preferences flash mode dialog box entries -->
@@ -463,7 +465,7 @@
          <item>@string/pref_camera_iso_entry_iso800</item>
          <item>@string/pref_camera_iso_entry_iso1600</item>
     </string-array>
-    
+
     <!-- Do not localize entryvalues -->
     <string-array name="pref_camera_iso_entryvalues">
          <item>@string/pref_camera_iso_value_auto</item>
@@ -502,7 +504,7 @@
         <item>@string/effect_backdropper_disco</item>
         <item>@string/effect_backdropper_gallery</item>
     </string-array>
-    
+
     <!-- Camera Preferences Anti Banding dialog box entries -->
      <string-array name="pref_camera_antibanding_entries">
          <item>@string/pref_camera_antibanding_entry_0</item>
@@ -517,7 +519,7 @@
          <item>60hz</item>
          <item>auto</item>
      </string-array>
-     
+
      <!-- Camera Preferences Histogram dialog box entries -->
      <string-array name="pref_camera_histogram_entries">
           <item>@string/pref_camera_histogram_entry_enable</item>
