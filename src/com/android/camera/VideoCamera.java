@@ -1288,8 +1288,6 @@ public class VideoCamera extends ActivityBase
             mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
         }
         String hfr = mParameters.getVideoHighFrameRate();
-        if(("off".equals(hfr)))
-            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
         mProfile.audioCodec = mAudioEncoder;
