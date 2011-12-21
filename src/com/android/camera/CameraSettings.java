@@ -626,11 +626,17 @@ public static final String KEY_CAMERA_MODE = "pref_camera_mode_key";
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_CIF)) {
             supported.add(Integer.toString(CamcorderProfile.QUALITY_CIF));
         }
+        if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_FWVGA)) {
+            supported.add(Integer.toString(CamcorderProfile.QUALITY_FWVGA));
+        }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_WVGA)) {
             supported.add(Integer.toString(CamcorderProfile.QUALITY_WVGA));
         }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_VGA)) {
             supported.add(Integer.toString(CamcorderProfile.QUALITY_VGA));
+        }
+        if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_WQVGA)) {
+            supported.add(Integer.toString(CamcorderProfile.QUALITY_WQVGA));
         }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QVGA)) {
             supported.add(Integer.toString(CamcorderProfile.QUALITY_QVGA));
