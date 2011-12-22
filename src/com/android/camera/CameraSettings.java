@@ -58,7 +58,6 @@ public class CameraSettings {
     public static final String KEY_ISO = "pref_camera_iso_key";
     public static final String KEY_LENSSHADING = "pref_camera_lensshading_key";
     public static final String KEY_MEMORY_COLOR_ENHANCEMENT = "pref_camera_mce_key";
-    public static final String KEY_HIGH_DYNAMIC_RANGE_IMAGING = "pref_camera_hdr_key";
     public static final String KEY_HISTOGRAM = "pref_camera_histogram_key";
     public static final String KEY_SKIN_TONE_ENHANCEMENT = "pref_camera_skinToneEnhancement_key";
     public static final String KEY_SKIN_TONE_ENHANCEMENT_FACTOR = "pref_camera_skinToneEnhancement_factor_key";
@@ -75,6 +74,7 @@ public class CameraSettings {
     public static final String KEY_CONTINUOUS_AF = "pref_camera_continuousaf_key";
     public static final String KEY_VIDEO_HIGH_FRAME_RATE = "pref_camera_hfr_key";
     public static final String KEY_DENOISE = "pref_camera_denoise_key";
+    public static final String KEY_AE_BRACKET_HDR = "pref_camera_ae_bracket_hdr_key";
 
     private static final String VIDEO_QUALITY_HIGH = "high";
     private static final String VIDEO_QUALITY_MMS = "mms";
@@ -189,7 +189,6 @@ public class CameraSettings {
         ListPreference mIso = group.findPreference(KEY_ISO);
         ListPreference lensShade = group.findPreference(KEY_LENSSHADING);
         ListPreference mce = group.findPreference(KEY_MEMORY_COLOR_ENHANCEMENT);
-        ListPreference hdr = group.findPreference(KEY_HIGH_DYNAMIC_RANGE_IMAGING);
         ListPreference histogram = group.findPreference(KEY_HISTOGRAM);
         ListPreference skinToneEnhancement = group.findPreference(KEY_SKIN_TONE_ENHANCEMENT);
         ListPreference antiBanding = group.findPreference(KEY_ANTIBANDING);
@@ -201,6 +200,7 @@ public class CameraSettings {
         ListPreference redeyeReduction = group.findPreference(KEY_REDEYE_REDUCTION);
         ListPreference denoise = group.findPreference(KEY_DENOISE);
 
+        ListPreference hdr = group.findPreference(KEY_AE_BRACKET_HDR);
         ListPreference videoEffect = group.findPreference(KEY_VIDEO_EFFECT);
         ListPreference zsl = group.findPreference(KEY_ZSL);
 

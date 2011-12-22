@@ -134,7 +134,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             CameraSettings.KEY_HISTOGRAM,
             CameraSettings.KEY_DENOISE,
             CameraSettings.KEY_REDEYE_REDUCTION,
-            CameraSettings.KEY_ZSL
+            CameraSettings.KEY_ZSL,
+            CameraSettings.KEY_AE_BRACKET_HDR
         };
     /*Histogram variables*/
     private GraphView mGraphView;
@@ -360,7 +361,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private int mSnapshotMode;
     private boolean zslrestartPreview;
-
+ 
     /**
      * This Handler is used to post message back onto the main thread of the
      * application
@@ -2373,10 +2374,40 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mSnapshotMode = CameraInfo.CAMERA_SUPPORT_MODE_ZSL;
             mParameters.setCameraMode(1);
             mFocusManager.setZslEnable(true);
+
+            // Currently HDR is not supported under ZSL mode
+            Editor editor = mPreferences.edit();
+            editor.putString(CameraSettings.KEY_AE_BRACKET_HDR, getString(R.string.pref_camera_ae_bracket_hdr_value_off));
+            editor.apply();
         }else{
             mSnapshotMode = CameraInfo.CAMERA_SUPPORT_MODE_NONZSL;
             mParameters.setCameraMode(0);
             mFocusManager.setZslEnable(false);
+        }
+
+        String hdr = mPreferences.getString(CameraSettings.KEY_AE_BRACKET_HDR,
+                                  getString(R.string.pref_camera_ae_bracket_hdr_default));
+        mParameters.setAEBracket(hdr);
+
+        if (hdr.equalsIgnoreCase(getString(R.string.pref_camera_ae_bracket_hdr_value_hdr))) {
+            mParameters.set("num-snaps-per-shutter", "2");
+        } else if (hdr.equalsIgnoreCase(getString(R.string.pref_camera_ae_bracket_hdr_value_ae_bracket))) {
+            String burst_exp = SystemProperties.get("persist.capture.burst.exposures", "");
+            Log.i(TAG, "capture-burst-exposures = " + burst_exp);
+            if ( (burst_exp != null) && (burst_exp.length()>0) ) {
+                mParameters.set("capture-burst-exposures", burst_exp);
+            }
+            if (burst_exp != null) {
+                String[] split_values = burst_exp.split(",");
+                if (split_values != null) {
+                    String snapshot_number = "";
+                    snapshot_number += split_values.length;
+                    Log.i(TAG, "num-snaps-per-shutter = " + snapshot_number);
+                    mParameters.set("num-snaps-per-shutter", snapshot_number);
+                }
+            }
+        }else {
+            mParameters.set("num-snaps-per-shutter", "1");
         }
 
         // Set JPEG quality.
