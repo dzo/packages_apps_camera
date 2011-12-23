@@ -210,6 +210,7 @@ public class CameraSettings {
             filterUnsupportedOptions(group, videoQuality, getSupportedVideoQuality());
         }
 
+
         if (pictureSize != null) {
             filterUnsupportedOptions(group, pictureSize, sizeListToStringList(
                     mParameters.getSupportedPictureSizes()));
@@ -610,38 +611,78 @@ public class CameraSettings {
         writePreferredCameraId(preferences, currentCameraId);
     }
 
+    //private int checkSupportedVideoQuality(List <Size> supported)
+    private boolean checkSupportedVideoQuality(int width, int height){
+        List <Size> supported = mParameters.getSupportedPreviewSizes();
+        int flag = 0;
+        for (Size size : supported){
+    //since we are having two profiles with same height, we are checking with height
+            if (size.height == 480) {
+                if (size.height == height) {
+                    flag = 1;
+                    break;
+                }
+            } else {
+                if (size.width == width) {
+                    flag = 1;
+                    break;
+                }
+            }
+        }
+        if (flag == 1)
+            return true;
+
+        return false;
+        }
+
     private ArrayList<String> getSupportedVideoQuality() {
         ArrayList<String> supported = new ArrayList<String>();
         // Check for supported quality
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_1080P)) {
-            supported.add(Integer.toString(CamcorderProfile.QUALITY_1080P));
+            if (checkSupportedVideoQuality(1920,1088)){
+                supported.add(Integer.toString(CamcorderProfile.QUALITY_1080P));
+            }
         }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_720P)) {
-            supported.add(Integer.toString(CamcorderProfile.QUALITY_720P));
+            if (checkSupportedVideoQuality(1280,720)){
+                supported.add(Integer.toString(CamcorderProfile.QUALITY_720P));
+            }
         }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_480P)) {
-            supported.add(Integer.toString(CamcorderProfile.QUALITY_480P));
+            if (checkSupportedVideoQuality(720,480)){
+                supported.add(Integer.toString(CamcorderProfile.QUALITY_480P));
+            }
         }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QCIF)) {
-            supported.add(Integer.toString(CamcorderProfile.QUALITY_QCIF));
+            if (checkSupportedVideoQuality(176,144)){
+                supported.add(Integer.toString(CamcorderProfile.QUALITY_QCIF));
+            }
         }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_CIF)) {
-            supported.add(Integer.toString(CamcorderProfile.QUALITY_CIF));
+            if (checkSupportedVideoQuality(352,288)){
+                supported.add(Integer.toString(CamcorderProfile.QUALITY_CIF));
+            }
         }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_FWVGA)) {
             supported.add(Integer.toString(CamcorderProfile.QUALITY_FWVGA));
         }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_WVGA)) {
-            supported.add(Integer.toString(CamcorderProfile.QUALITY_WVGA));
+            if (checkSupportedVideoQuality(800,480)){
+                supported.add(Integer.toString(CamcorderProfile.QUALITY_WVGA));
+            }
         }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_VGA)) {
-            supported.add(Integer.toString(CamcorderProfile.QUALITY_VGA));
+            if (checkSupportedVideoQuality(640,480)){
+                supported.add(Integer.toString(CamcorderProfile.QUALITY_VGA));
+            }
         }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_WQVGA)) {
             supported.add(Integer.toString(CamcorderProfile.QUALITY_WQVGA));
         }
         if (CamcorderProfile.hasProfile(mCameraId, CamcorderProfile.QUALITY_QVGA)) {
-            supported.add(Integer.toString(CamcorderProfile.QUALITY_QVGA));
+            if (checkSupportedVideoQuality(320,240)){
+                supported.add(Integer.toString(CamcorderProfile.QUALITY_QVGA));
+            }
         }
         return supported;
     }
