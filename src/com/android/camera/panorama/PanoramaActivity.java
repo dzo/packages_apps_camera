@@ -25,20 +25,21 @@ import com.android.camera.MenuHelper;
 import com.android.camera.ModePicker;
 import com.android.camera.OnClickAttr;
 import com.android.camera.R;
+import com.android.camera.RotateDialogController;
 import com.android.camera.ShutterButton;
-import com.android.camera.SoundPlayer;
 import com.android.camera.Storage;
 import com.android.camera.Thumbnail;
 import com.android.camera.Util;
+import com.android.camera.ui.PopupManager;
+import com.android.camera.ui.Rotatable;
 import com.android.camera.ui.RotateImageView;
+import com.android.camera.ui.RotateLayout;
 import com.android.camera.ui.SharePopup;
 
-import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.content.ContentResolver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.res.AssetFileDescriptor;
+import android.content.pm.ActivityInfo;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -47,30 +48,31 @@ import android.graphics.PixelFormat;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.graphics.YuvImage;
-import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.Size;
+import android.hardware.CameraSound;
 import android.hardware.Sensor;
 import android.hardware.SensorManager;
+import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemProperties;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.OrientationEventListener;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -88,6 +90,9 @@ public class PanoramaActivity extends ActivityBase implements
     private static final int MSG_RESET_TO_PREVIEW_WITH_THUMBNAIL = 2;
     private static final int MSG_GENERATE_FINAL_MOSAIC_ERROR = 3;
     private static final int MSG_RESET_TO_PREVIEW = 4;
+    private static final int MSG_CLEAR_SCREEN_DELAY = 5;
+
+    private static final int SCREEN_DELAY = 2 * 60 * 1000;
 
     private static final String TAG = "PanoramaActivity";
     private static final int PREVIEW_STOPPED = 0;
@@ -101,15 +106,13 @@ public class PanoramaActivity extends ActivityBase implements
     // Ratio of nanosecond to second
     private static final float NS2S = 1.0f / 1000000000.0f;
 
-    private static final String VIDEO_RECORD_SOUND = "/system/media/audio/ui/VideoRecord.ogg";
-
     private boolean mPausing;
 
     private View mPanoLayout;
     private View mCaptureLayout;
     private View mReviewLayout;
     private ImageView mReview;
-    private TextView mCaptureIndicator;
+    private RotateLayout mCaptureIndicator;
     private PanoProgressBar mPanoProgressBar;
     private PanoProgressBar mSavingProgressBar;
     private View mFastIndicationBorder;
@@ -121,10 +124,9 @@ public class PanoramaActivity extends ActivityBase implements
     private Object mWaitObject = new Object();
 
     private String mPreparePreviewString;
-    private AlertDialog mAlertDialog;
-    private ProgressDialog mProgressDialog;
     private String mDialogTitle;
-    private String mDialogOk;
+    private String mDialogOkString;
+    private String mDialogPanoramaFailedString;
 
     private int mIndicatorColor;
     private int mIndicatorColorFast;
@@ -139,11 +141,6 @@ public class PanoramaActivity extends ActivityBase implements
     private int mTraversedAngleX;
     private int mTraversedAngleY;
     private long mTimestamp;
-    // Control variables for the terminate condition.
-    private int mMinAngleX;
-    private int mMaxAngleX;
-    private int mMinAngleY;
-    private int mMaxAngleY;
 
     private RotateImageView mThumbnailView;
     private Thumbnail mThumbnail;
@@ -164,8 +161,7 @@ public class PanoramaActivity extends ActivityBase implements
     private boolean mCancelComputation;
     private float[] mTransformMatrix;
     private float mHorizontalViewAngle;
-
-    private SoundPlayer mRecordSound;
+    private float mVerticalViewAngle;
 
     // Prefer FOCUS_MODE_INFINITY to FOCUS_MODE_CONTINUOUS_VIDEO because of
     // getting a better image quality by the former.
@@ -175,7 +171,13 @@ public class PanoramaActivity extends ActivityBase implements
     // The value could be 0, 90, 180, 270 for the 4 different orientations measured in clockwise
     // respectively.
     private int mDeviceOrientation;
+    private int mDeviceOrientationAtCapture;
+    private int mCameraOrientation;
     private int mOrientationCompensation;
+
+    private RotateDialogController mRotateDialog;
+
+    private CameraSound mCameraSound;
 
     private class MosaicJpeg {
         public MosaicJpeg(byte[] data, int width, int height) {
@@ -251,8 +253,6 @@ public class PanoramaActivity extends ActivityBase implements
         super.onCreate(icicle);
 
         Window window = getWindow();
-        window.setFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
-                WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         Util.enterLightsOutMode(window);
         Util.initializeScreenBrightness(window, getContentResolver());
 
@@ -271,7 +271,10 @@ public class PanoramaActivity extends ActivityBase implements
         mPreparePreviewString =
                 getResources().getString(R.string.pano_dialog_prepare_preview);
         mDialogTitle = getResources().getString(R.string.pano_dialog_title);
-        mDialogOk = getResources().getString(R.string.dialog_ok);
+        mDialogOkString = getResources().getString(R.string.dialog_ok);
+        mDialogPanoramaFailedString =
+                getResources().getString(R.string.pano_dialog_panorama_failed);
+        mCameraSound = new CameraSound();
 
         mMainHandler = new Handler() {
             @Override
@@ -297,39 +300,31 @@ public class PanoramaActivity extends ActivityBase implements
                         if (mPausing) {
                             resetToPreview();
                         } else {
-                            mAlertDialog.show();
+                            mRotateDialog.showAlertDialog(
+                                    mDialogTitle, mDialogPanoramaFailedString,
+                                    mDialogOkString, new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            resetToPreview();
+                                        }},
+                                    null, null);
                         }
                         break;
                     case MSG_RESET_TO_PREVIEW:
                         onBackgroundThreadFinished();
                         resetToPreview();
+                        break;
+                    case MSG_CLEAR_SCREEN_DELAY:
+                        getWindow().clearFlags(WindowManager.LayoutParams.
+                                FLAG_KEEP_SCREEN_ON);
+                        break;
                 }
                 clearMosaicFrameProcessorIfNeeded();
             }
         };
-
-        mAlertDialog = (new AlertDialog.Builder(this))
-                .setTitle(mDialogTitle)
-                .setMessage(R.string.pano_dialog_panorama_failed)
-                .create();
-        mAlertDialog.setCancelable(false);
-        mAlertDialog.setButton(DialogInterface.BUTTON_POSITIVE, mDialogOk,
-                new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                        resetToPreview();
-                    }
-                });
     }
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        updateThumbnailButton();
-    }
-
-    private void setupCamera() {
+    private void setupCamera() throws CameraHardwareException, CameraDisabledException {
         openCamera();
         Parameters parameters = mCameraDevice.getParameters();
         setupCaptureParams(parameters);
@@ -345,16 +340,10 @@ public class PanoramaActivity extends ActivityBase implements
         }
     }
 
-    private void openCamera() {
-        try {
-            mCameraDevice = Util.openCamera(this, CameraHolder.instance().getBackCameraId());
-        } catch (CameraHardwareException e) {
-            Util.showErrorAndFinish(this, R.string.cannot_connect_camera);
-            return;
-        } catch (CameraDisabledException e) {
-            Util.showErrorAndFinish(this, R.string.camera_disabled);
-            return;
-        }
+    private void openCamera() throws CameraHardwareException, CameraDisabledException {
+        int backCameraId = CameraHolder.instance().getBackCameraId();
+        mCameraDevice = Util.openCamera(this, backCameraId);
+        mCameraOrientation = Util.getCameraOrientation(backCameraId);
     }
 
     private boolean findBestPreviewSize(List<Size> supportedSizes, boolean need4To3,
@@ -413,8 +402,8 @@ public class PanoramaActivity extends ActivityBase implements
 
         parameters.setRecordingHint(false);
 
-        mHorizontalViewAngle = (((mDeviceOrientation / 90) % 2) == 0) ?
-                parameters.getHorizontalViewAngle() : parameters.getVerticalViewAngle();
+        mHorizontalViewAngle = parameters.getHorizontalViewAngle();
+        mVerticalViewAngle =  parameters.getVerticalViewAngle();
     }
 
     public int getPreviewBufSize() {
@@ -499,10 +488,16 @@ public class PanoramaActivity extends ActivityBase implements
         /* This function may be called by some random thread,
          * so let's be safe and use synchronize. No OpenGL calls can be done here.
          */
+        // Frames might still be available after the activity is paused. If we call onFrameAvailable
+        // after pausing, the GL thread will crash.
+        if (mPausing) return;
+
         // Updating the texture should be done in the GL thread which mMosaicView is attached.
         mMosaicView.queueEvent(new Runnable() {
             @Override
             public void run() {
+                // Check if the activity is paused here can speed up the onPause() process.
+                if (mPausing) return;
                 mSurfaceTexture.updateTexImage();
                 mSurfaceTexture.getTransformMatrix(mTransformMatrix);
             }
@@ -549,22 +544,23 @@ public class PanoramaActivity extends ActivityBase implements
 
         mCompassValueXStart = mCompassValueXStartBuffer;
         mCompassValueYStart = mCompassValueYStartBuffer;
-        mMinAngleX = 0;
-        mMaxAngleX = 0;
-        mMinAngleY = 0;
-        mMaxAngleY = 0;
         mTimestamp = 0;
 
         mMosaicFrameProcessor.setProgressListener(new MosaicFrameProcessor.ProgressListener() {
             @Override
             public void onProgress(boolean isFinished, float panningRateX, float panningRateY,
                     float progressX, float progressY) {
+                float accumulatedHorizontalAngle = progressX * mHorizontalViewAngle;
+                float accumulatedVerticalAngle = progressY * mVerticalViewAngle;
                 if (isFinished
-                        || (mMaxAngleX - mMinAngleX >= DEFAULT_SWEEP_ANGLE)
-                        || (mMaxAngleY - mMinAngleY >= DEFAULT_SWEEP_ANGLE)) {
+                        || (Math.abs(accumulatedHorizontalAngle) >= DEFAULT_SWEEP_ANGLE)
+                        || (Math.abs(accumulatedVerticalAngle) >= DEFAULT_SWEEP_ANGLE)) {
                     stopCapture(false);
                 } else {
-                    updateProgress(panningRateX, progressX, progressY);
+                    float panningRateXInDegree = panningRateX * mHorizontalViewAngle;
+                    float panningRateYInDegree = panningRateY * mVerticalViewAngle;
+                    updateProgress(panningRateXInDegree, panningRateYInDegree,
+                            accumulatedHorizontalAngle, accumulatedVerticalAngle);
                 }
             }
         });
@@ -577,6 +573,8 @@ public class PanoramaActivity extends ActivityBase implements
         mPanoProgressBar.setIndicatorWidth(20);
         mPanoProgressBar.setMaxProgress(DEFAULT_SWEEP_ANGLE);
         mPanoProgressBar.setVisibility(View.VISIBLE);
+        mDeviceOrientationAtCapture = mDeviceOrientation;
+        keepScreenOn();
     }
 
     private void stopCapture(boolean aborted) {
@@ -592,7 +590,7 @@ public class PanoramaActivity extends ActivityBase implements
         mSurfaceTexture.setOnFrameAvailableListener(null);
 
         if (!aborted && !mThreadRunning) {
-            showDialog(mPreparePreviewString);
+            mRotateDialog.showWaitingDialog(mPreparePreviewString);
             runBackgroundThread(new Thread() {
                 @Override
                 public void run() {
@@ -612,6 +610,7 @@ public class PanoramaActivity extends ActivityBase implements
         }
         // do we have to wait for the thread to complete before enabling this?
         if (mModePicker != null) mModePicker.setEnabled(true);
+        keepScreenOnAwhile();
     }
 
     private void showTooFastIndication() {
@@ -630,19 +629,25 @@ public class PanoramaActivity extends ActivityBase implements
         mRightIndicator.setEnabled(false);
     }
 
-    private void updateProgress(float panningRate, float progressX, float progressY) {
+    private void updateProgress(float panningRateXInDegree, float panningRateYInDegree,
+            float progressHorizontalAngle, float progressVerticalAngle) {
         mMosaicView.setReady();
         mMosaicView.requestRender();
 
         // TODO: Now we just display warning message by the panning speed.
         // Since we only support horizontal panning, we should display a warning message
         // in UI when there're significant vertical movements.
-        if (Math.abs(panningRate * mHorizontalViewAngle) > PANNING_SPEED_THRESHOLD) {
+        if ((Math.abs(panningRateXInDegree) > PANNING_SPEED_THRESHOLD)
+            || (Math.abs(panningRateYInDegree) > PANNING_SPEED_THRESHOLD)) {
             showTooFastIndication();
         } else {
             hideTooFastIndication();
         }
-        mPanoProgressBar.setProgress((int) (progressX * mHorizontalViewAngle));
+        int angleInMajorDirection =
+                (Math.abs(progressHorizontalAngle) > Math.abs(progressVerticalAngle))
+                ? (int) progressHorizontalAngle
+                : (int) progressVerticalAngle;
+        mPanoProgressBar.setProgress((angleInMajorDirection));
     }
 
     private void createContentView() {
@@ -682,7 +687,7 @@ public class PanoramaActivity extends ActivityBase implements
         mSavingProgressBar.setBackgroundColor(appRes.getColor(R.color.pano_progress_empty));
         mSavingProgressBar.setDoneColor(appRes.getColor(R.color.pano_progress_indication));
 
-        mCaptureIndicator = (TextView) findViewById(R.id.pano_capture_indicator);
+        mCaptureIndicator = (RotateLayout) findViewById(R.id.pano_capture_indicator);
 
         mThumbnailView = (RotateImageView) findViewById(R.id.thumbnail);
         mThumbnailView.enableFilter(false);
@@ -702,6 +707,25 @@ public class PanoramaActivity extends ActivityBase implements
         mShutterButton.setOnShutterButtonListener(this);
 
         mPanoLayout = findViewById(R.id.pano_layout);
+
+        mRotateDialog = new RotateDialogController(this, R.layout.rotate_dialog);
+
+        if (getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+            Rotatable[] rotateLayout = {
+                    (Rotatable) findViewById(R.id.pano_pan_progress_bar_layout),
+                    (Rotatable) findViewById(R.id.pano_capture_too_fast_textview_layout),
+                    (Rotatable) findViewById(R.id.pano_review_saving_indication_layout),
+                    (Rotatable) findViewById(R.id.pano_saving_progress_bar_layout),
+                    (Rotatable) findViewById(R.id.pano_review_cancel_button_layout),
+                    (Rotatable) findViewById(R.id.pano_rotate_reviewarea),
+                    (Rotatable) mRotateDialog,
+                    (Rotatable) mCaptureIndicator,
+                    (Rotatable) mModePicker,
+                    (Rotatable) mThumbnailView};
+            for (Rotatable r : rotateLayout) {
+                r.setOrientation(270);
+            }
+        }
     }
 
     @Override
@@ -713,11 +737,11 @@ public class PanoramaActivity extends ActivityBase implements
         // right now.
         switch (mCaptureState) {
             case CAPTURE_STATE_VIEWFINDER:
-                if (mRecordSound != null) mRecordSound.play();
+                mCameraSound.playSound(CameraSound.START_VIDEO_RECORDING);
                 startCapture();
                 break;
             case CAPTURE_STATE_MOSAIC:
-                if (mRecordSound != null) mRecordSound.play();
+                mCameraSound.playSound(CameraSound.STOP_VIDEO_RECORDING);
                 stopCapture(false);
         }
     }
@@ -755,6 +779,14 @@ public class PanoramaActivity extends ActivityBase implements
         t.start();
     }
 
+    private void initThumbnailButton() {
+        // Load the thumbnail from the disk.
+        if (mThumbnail == null) {
+            mThumbnail = Thumbnail.loadFrom(new File(getFilesDir(), Thumbnail.LAST_THUMB_FILENAME));
+        }
+        updateThumbnailButton();
+    }
+
     private void updateThumbnailButton() {
         // Update last image if URI is invalid and the storage is ready.
         ContentResolver contentResolver = getContentResolver();
@@ -779,7 +811,13 @@ public class PanoramaActivity extends ActivityBase implements
                 } else if (!jpeg.isValid) {  // Error when generating mosaic.
                     mMainHandler.sendEmptyMessage(MSG_GENERATE_FINAL_MOSAIC_ERROR);
                 } else {
-                    int orientation = Exif.getOrientation(jpeg.data);
+                    // The panorama image returned from the library is orientated based on the
+                    // natural orientation of a camera. We need to set an orientation for the image
+                    // in its EXIF header, so the image can be displayed correctly.
+                    // The orientation is calculated from compensating the
+                    // device orientation at capture and the camera orientation respective to
+                    // the natural orientation of the device.
+                    int orientation = (mDeviceOrientationAtCapture + mCameraOrientation) % 360;
                     Uri uri = savePanorama(jpeg.data, jpeg.width, jpeg.height, orientation);
                     if (uri != null) {
                         // Create a thumbnail whose width or height is equal or bigger
@@ -792,6 +830,7 @@ public class PanoramaActivity extends ActivityBase implements
                                 Math.max(widthRatio, heightRatio));
                         mThumbnail = Thumbnail.createThumbnail(
                                 jpeg.data, orientation, inSampleSize, uri);
+                        Util.broadcastNewPicture(PanoramaActivity.this, uri);
                     }
                     mMainHandler.sendMessage(
                             mMainHandler.obtainMessage(MSG_RESET_TO_PREVIEW_WITH_THUMBNAIL));
@@ -801,12 +840,6 @@ public class PanoramaActivity extends ActivityBase implements
         reportProgress();
     }
 
-    private void showDialog(String str) {
-          mProgressDialog = new ProgressDialog(this);
-          mProgressDialog.setMessage(str);
-          mProgressDialog.show();
-    }
-
     private void runBackgroundThread(Thread thread) {
         mThreadRunning = true;
         thread.start();
@@ -814,10 +847,7 @@ public class PanoramaActivity extends ActivityBase implements
 
     private void onBackgroundThreadFinished() {
         mThreadRunning = false;
-        if (mProgressDialog != null) {
-            mProgressDialog.dismiss();
-            mProgressDialog = null;
-        }
+        mRotateDialog.dismissDialog();
     }
 
     private void cancelHighResComputation() {
@@ -878,12 +908,40 @@ public class PanoramaActivity extends ActivityBase implements
 
     private Uri savePanorama(byte[] jpegData, int width, int height, int orientation) {
         if (jpegData != null) {
-            String imagePath = PanoUtil.createName(
+            String filename = PanoUtil.createName(
                     getResources().getString(R.string.pano_file_name_format), mTimeTaken);
-            return Storage.addImage(getContentResolver(), imagePath, null,
-                    mTimeTaken, null, orientation, jpegData, width, height);
+            Uri uri = Storage.addImage(getContentResolver(), filename, null,mTimeTaken, null,
+                    orientation, jpegData, width, height);
+            if (uri != null && orientation != 0) {
+                String filepath = Storage.generateFilepath(filename);
+                try {
+                    // Save the orientation in EXIF.
+                    ExifInterface exif = new ExifInterface(filepath);
+                    exif.setAttribute(ExifInterface.TAG_ORIENTATION,
+                            getExifOrientation(orientation));
+                    exif.saveAttributes();
+                } catch (IOException e) {
+                    Log.e(TAG, "cannot set exif data: " + filepath);
+                }
+            }
+            return uri;
         }
         return null;
+    }
+
+    private static String getExifOrientation(int orientation) {
+        switch (orientation) {
+            case 0:
+                return String.valueOf(ExifInterface.ORIENTATION_NORMAL);
+            case 90:
+                return String.valueOf(ExifInterface.ORIENTATION_ROTATE_90);
+            case 180:
+                return String.valueOf(ExifInterface.ORIENTATION_ROTATE_180);
+            case 270:
+                return String.valueOf(ExifInterface.ORIENTATION_ROTATE_270);
+            default:
+                throw new AssertionError("invalid: " + orientation);
+        }
     }
 
     private void clearMosaicFrameProcessorIfNeeded() {
@@ -899,34 +957,6 @@ public class PanoramaActivity extends ActivityBase implements
                     mPreviewWidth, mPreviewHeight, getPreviewBufSize());
         }
         mMosaicFrameProcessor.initialize();
-    }
-
-    private void initSoundRecorder() {
-        // Construct sound player; use enforced sound output if necessary
-        File recordSoundFile = new File(VIDEO_RECORD_SOUND);
-        try {
-            ParcelFileDescriptor recordSoundParcel =
-                    ParcelFileDescriptor.open(recordSoundFile,
-                            ParcelFileDescriptor.MODE_READ_ONLY);
-            AssetFileDescriptor recordSoundAsset =
-                    new AssetFileDescriptor(recordSoundParcel, 0,
-                                            AssetFileDescriptor.UNKNOWN_LENGTH);
-            if (SystemProperties.get("ro.camera.sound.forced", "0").equals("0")) {
-                mRecordSound = new SoundPlayer(recordSoundAsset, false);
-            } else {
-                mRecordSound = new SoundPlayer(recordSoundAsset, true);
-            }
-        } catch (java.io.FileNotFoundException e) {
-            Log.e(TAG, "System video record sound not found");
-            mRecordSound = null;
-        }
-    }
-
-    private void releaseSoundRecorder() {
-        if (mRecordSound != null) {
-            mRecordSound.release();
-            mRecordSound = null;
-        }
     }
 
     @Override
@@ -947,10 +977,11 @@ public class PanoramaActivity extends ActivityBase implements
         }
 
         releaseCamera();
-        releaseSoundRecorder();
         mMosaicView.onPause();
         clearMosaicFrameProcessorIfNeeded();
         mOrientationEventListener.disable();
+        resetScreenOn();
+        mCameraSound.release();
         System.gc();
     }
 
@@ -960,19 +991,41 @@ public class PanoramaActivity extends ActivityBase implements
         mOrientationEventListener.enable();
 
         mCaptureState = CAPTURE_STATE_VIEWFINDER;
-        setupCamera();
+        try {
+            setupCamera();
 
-        initSoundRecorder();
+            // Camera must be initialized before MosaicFrameProcessor is initialized.
+            // The preview size has to be decided by camera device.
+            initMosaicFrameProcessorIfNeeded();
+            mMosaicView.onResume();
 
-        // Camera must be initialized before MosaicFrameProcessor is initialized. The preview size
-        // has to be decided by camera device.
-        initMosaicFrameProcessorIfNeeded();
-        mMosaicView.onResume();
+            initThumbnailButton();
+            keepScreenOnAwhile();
+        } catch (CameraHardwareException e) {
+            Util.showErrorAndFinish(this, R.string.cannot_connect_camera);
+            return;
+        } catch (CameraDisabledException e) {
+            Util.showErrorAndFinish(this, R.string.camera_disabled);
+            return;
+        }
+        // Dismiss open menu if exists.
+        PopupManager.getInstance(this).notifyShowPopup(null);
     }
 
+    /**
+     * Generate the final mosaic image.
+     *
+     * @param highRes flag to indicate whether we want to get a high-res version.
+     * @return a MosaicJpeg with its isValid flag set to true if successful; null if the generation
+     *         process is cancelled; and a MosaicJpeg with its isValid flag set to false if there
+     *         is an error in generating the final mosaic.
+     */
     public MosaicJpeg generateFinalMosaic(boolean highRes) {
-        if (mMosaicFrameProcessor.createMosaic(highRes) == Mosaic.MOSAIC_RET_CANCELLED) {
+        int mosaicReturnCode = mMosaicFrameProcessor.createMosaic(highRes);
+        if (mosaicReturnCode == Mosaic.MOSAIC_RET_CANCELLED) {
             return null;
+        } else if (mosaicReturnCode == Mosaic.MOSAIC_RET_ERROR) {
+            return new MosaicJpeg();
         }
 
         byte[] imageData = mMosaicFrameProcessor.getFinalMosaicNV21();
@@ -1021,9 +1074,10 @@ public class PanoramaActivity extends ActivityBase implements
         // the screen).
         if (mCameraState != PREVIEW_STOPPED) stopCameraPreview();
 
-        int orientation = Util.getDisplayOrientation(Util.getDisplayRotation(this),
-                CameraHolder.instance().getBackCameraId());
-        mCameraDevice.setDisplayOrientation(orientation);
+        // Set the display orientation to 0, so that the underlying mosaic library
+        // can always get undistorted mPreviewWidth x mPreviewHeight image data
+        // from SurfaceTexture.
+        mCameraDevice.setDisplayOrientation(0);
 
         setPreviewTexture(mSurfaceTexture);
 
@@ -1043,5 +1097,27 @@ public class PanoramaActivity extends ActivityBase implements
             mCameraDevice.stopPreview();
         }
         mCameraState = PREVIEW_STOPPED;
+    }
+
+    @Override
+    public void onUserInteraction() {
+        super.onUserInteraction();
+        if (mCaptureState != CAPTURE_STATE_MOSAIC) keepScreenOnAwhile();
+    }
+
+    private void resetScreenOn() {
+        mMainHandler.removeMessages(MSG_CLEAR_SCREEN_DELAY);
+        getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
+
+    private void keepScreenOnAwhile() {
+        mMainHandler.removeMessages(MSG_CLEAR_SCREEN_DELAY);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        mMainHandler.sendEmptyMessageDelayed(MSG_CLEAR_SCREEN_DELAY, SCREEN_DELAY);
+    }
+
+    private void keepScreenOn() {
+        mMainHandler.removeMessages(MSG_CLEAR_SCREEN_DELAY);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     }
 }

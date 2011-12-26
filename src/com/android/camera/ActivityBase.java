@@ -20,13 +20,14 @@ import com.android.camera.ui.PopupManager;
 
 import android.app.Activity;
 import android.app.KeyguardManager;
-import android.view.KeyEvent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.hardware.Camera;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 
 /**
  * Superclass of Camera and VideoCamera activities.
@@ -41,6 +42,11 @@ abstract public class ActivityBase extends Activity {
 
     @Override
     public void onCreate(Bundle icicle) {
+        if (Util.isTabletUI()) {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        } else {
+            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
         super.onCreate(icicle);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
@@ -61,11 +67,16 @@ abstract public class ActivityBase extends Activity {
         // Don't grab the camera if in use by lockscreen. For example, face
         // unlock may be using the camera. Camera may be already opened in
         // onCreate. doOnResume should continue if mCameraDevice != null.
-        if (mCameraDevice == null && !hasWindowFocus() && isKeyguardLocked()) {
-            if (LOGV) Log.v(TAG, "onRsume. mOnResumePending=true");
+        // Suppose camera app is in the foreground. If users turn off and turn
+        // on the screen very fast, camera app can still have the focus when the
+        // lock screen shows up. The keyguard takes input focus, so the caemra
+        // app will lose focus when it is displayed.
+        if (LOGV) Log.v(TAG, "onResume. hasWindowFocus()=" + hasWindowFocus());
+        if (mCameraDevice == null && isKeyguardLocked()) {
+            if (LOGV) Log.v(TAG, "onResume. mOnResumePending=true");
             mOnResumePending = true;
         } else {
-            if (LOGV) Log.v(TAG, "onRsume. mOnResumePending=false");
+            if (LOGV) Log.v(TAG, "onResume. mOnResumePending=false");
             doOnResume();
             mOnResumePending = false;
         }
@@ -124,6 +135,12 @@ abstract public class ActivityBase extends Activity {
 
     private boolean isKeyguardLocked() {
         KeyguardManager kgm = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
+        if (LOGV) {
+            if (kgm != null) {
+                Log.v(TAG, "kgm.isKeyguardLocked()="+kgm.isKeyguardLocked()
+                        + ". kgm.isKeyguardSecure()="+kgm.isKeyguardSecure());
+            }
+        }
         // isKeyguardSecure excludes the slide lock case.
         return (kgm != null) && kgm.isKeyguardLocked() && kgm.isKeyguardSecure();
     }

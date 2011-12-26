@@ -90,7 +90,7 @@ public class Util {
     }
 
     public static void initialize(Context context) {
-        sIsTabletUI = (context.getResources().getConfiguration().screenWidthDp >= 1024);
+        sIsTabletUI = (context.getResources().getConfiguration().smallestScreenWidthDp >= 600);
 
         DisplayMetrics metrics = new DisplayMetrics();
         WindowManager wm = (WindowManager)
@@ -350,6 +350,12 @@ public class Util {
         return result;
     }
 
+    public static int getCameraOrientation(int cameraId) {
+        Camera.CameraInfo info = new Camera.CameraInfo();
+        Camera.getCameraInfo(cameraId, info);
+        return info.orientation;
+    }
+
     public static int roundOrientation(int orientation, int orientationHistory) {
         boolean changeOrientation = false;
         if (orientationHistory == OrientationEventListener.ORIENTATION_UNKNOWN) {
@@ -407,6 +413,37 @@ public class Util {
                 if (Math.abs(size.height - targetHeight) < minDiff) {
                     optimalSize = size;
                     minDiff = Math.abs(size.height - targetHeight);
+                }
+            }
+        }
+        return optimalSize;
+    }
+
+    // Returns the largest picture size which matches the given aspect ratio.
+    public static Size getOptimalVideoSnapshotPictureSize(
+            List<Size> sizes, double targetRatio) {
+        // Use a very small tolerance because we want an exact match.
+        final double ASPECT_TOLERANCE = 0.001;
+        if (sizes == null) return null;
+
+        Size optimalSize = null;
+
+        // Try to find a size matches aspect ratio and has the largest width
+        for (Size size : sizes) {
+            double ratio = (double) size.width / size.height;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            if (optimalSize == null || size.width > optimalSize.width) {
+                optimalSize = size;
+            }
+        }
+
+        // Cannot find one that matches the aspect ratio. This should not happen.
+        // Ignore the requirement.
+        if (optimalSize == null) {
+            Log.w(TAG, "No picture size match the aspect ratio");
+            for (Size size : sizes) {
+                if (optimalSize == null || size.width > optimalSize.width) {
+                    optimalSize = size;
                 }
             }
         }

@@ -37,7 +37,7 @@ import java.util.HashMap;
  * A view that contains camera setting indicators.
  */
 public abstract class IndicatorControl extends RelativeLayout implements
-        IndicatorButton.Listener, OtherSettingsPopup.Listener {
+        IndicatorButton.Listener, OtherSettingsPopup.Listener, Rotatable {
     private static final String TAG = "IndicatorControl";
     public static final int MODE_CAMERA = 0;
     public static final int MODE_VIDEO = 1;
@@ -47,7 +47,7 @@ public abstract class IndicatorControl extends RelativeLayout implements
     protected CameraPicker mCameraPicker;
 
     private PreferenceGroup mPreferenceGroup;
-    private int mDegree = 0;
+    private int mOrientation = 0;
 
     protected int mCurrentMode = MODE_CAMERA;
 
@@ -65,15 +65,13 @@ public abstract class IndicatorControl extends RelativeLayout implements
         super(context, attrs);
     }
 
-    public void setDegree(int degree) {
-        mDegree = degree;
+    public void setOrientation(int orientation) {
+        mOrientation = orientation;
         int count = getChildCount();
         for (int i = 0 ; i < count ; ++i) {
             View view = getChildAt(i);
-            if (view instanceof RotateImageView) {
-                ((RotateImageView) view).setDegree(degree);
-            } else if (view instanceof ZoomControl) {
-                ((ZoomControl) view).setDegree(degree);
+            if (view instanceof Rotatable) {
+                ((Rotatable) view).setOrientation(orientation);
             }
         }
     }

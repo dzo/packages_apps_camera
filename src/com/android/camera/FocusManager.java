@@ -26,6 +26,7 @@ import android.graphics.Rect;
 import android.graphics.RectF;
 import android.hardware.Camera.Area;
 import android.hardware.Camera.Parameters;
+import android.hardware.CameraSound;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
@@ -57,11 +58,9 @@ public class FocusManager {
     private boolean mInitialized;
     private boolean mZslEnabled = false;
     private boolean mFocusAreaSupported;
-    private boolean mInLongPress;
     private boolean mLockAeAwbNeeded;
     private boolean mAeAwbLock;
     private Matrix mMatrix;
-    private SoundPlayer mSoundPlayer;
     private View mFocusIndicatorRotateLayout;
     private FocusIndicatorView mFocusIndicator;
     private View mPreviewFrame;
@@ -69,7 +68,7 @@ public class FocusManager {
     private List<Area> mFocusArea; // focus area in driver format
     private List<Area> mMeteringArea; // metering area in driver format
     private String mFocusMode;
-    private String mDefaultFocusMode;
+    private String[] mDefaultFocusModes;
     private String mOverrideFocusMode;
     private Parameters mParameters;
     private ComboPreferences mPreferences;
@@ -83,6 +82,7 @@ public class FocusManager {
         public void startFaceDetection();
         public void stopFaceDetection();
         public void setFocusParameters();
+        public void playSound(int soundId);
     }
 
     private class MainHandler extends Handler {
@@ -98,9 +98,9 @@ public class FocusManager {
         }
     }
 
-    public FocusManager(ComboPreferences preferences, String defaultFocusMode) {
+    public FocusManager(ComboPreferences preferences, String[] defaultFocusModes) {
         mPreferences = preferences;
-        mDefaultFocusMode = defaultFocusMode;
+        mDefaultFocusModes = defaultFocusModes;
         mHandler = new MainHandler();
         mMatrix = new Matrix();
     }
@@ -175,22 +175,6 @@ public class FocusManager {
         }
     }
 
-    public void shutterLongPressed() {
-        if (Parameters.FOCUS_MODE_CONTINUOUS_PICTURE.equals(mFocusMode)
-                && isSupported(Parameters.FOCUS_MODE_AUTO, mParameters.getSupportedFocusModes())) {
-            if (mState == STATE_IDLE || mState == STATE_FOCUSING_SNAP_ON_FINISH) {
-                Log.e(TAG, "Invalid focus state=" + mState);
-            }
-            mInLongPress = true;
-            // Cancel any outstanding Auto focus requests. The auto focus mode
-            // will be changed from CAF to auto in cancelAutoFocus.
-            onShutterUp();
-            // Call Autofocus
-            onShutterDown();
-            mInLongPress = false;
-        }
-    }
-
     public void doSnap() {
         if (!mInitialized) return;
 
@@ -239,9 +223,9 @@ public class FocusManager {
                 // Do not play the sound in continuous autofocus mode. It does
                 // not do a full scan. The focus callback arrives before doSnap
                 // so the state is always STATE_FOCUSING.
-                if (!Parameters.FOCUS_MODE_CONTINUOUS_PICTURE.equals(mFocusMode)
-                        && mSoundPlayer != null) {
-                    mSoundPlayer.play();
+                if (!Parameters.FOCUS_MODE_CONTINUOUS_PICTURE.
+                        equals(mFocusMode)) {
+                    mListener.playSound(CameraSound.FOCUS_COMPLETE);
                 }
             } else {
                 mState = STATE_FAIL;
@@ -365,35 +349,31 @@ public class FocusManager {
         }
     }
 
-    public void initializeSoundPlayer(AssetFileDescriptor fd) {
-        mSoundPlayer = new SoundPlayer(fd);
-    }
-
-    public void releaseSoundPlayer() {
-        if (mSoundPlayer != null) {
-            mSoundPlayer.release();
-            mSoundPlayer = null;
-        }
-    }
-
-
     // This can only be called after mParameters is initialized.
     public String getFocusMode() {
         if (mOverrideFocusMode != null) return mOverrideFocusMode;
+        List<String> supportedFocusModes = mParameters.getSupportedFocusModes();
 
-        if (mInLongPress) {
-            // Users long-press the shutter button in CAF. Change it to auto
-            // mode, so it will do a full scan.
-            mFocusMode = Parameters.FOCUS_MODE_AUTO;
-        } else if (mFocusAreaSupported && mFocusArea != null) {
+        if (mFocusAreaSupported && mFocusArea != null) {
             // Always use autofocus in tap-to-focus.
             mFocusMode = Parameters.FOCUS_MODE_AUTO;
         } else {
             // The default is continuous autofocus.
             mFocusMode = mPreferences.getString(
-                    CameraSettings.KEY_FOCUS_MODE, mDefaultFocusMode);
+                    CameraSettings.KEY_FOCUS_MODE, null);
+
+            // Try to find a supported focus mode from the default list.
+            if (mFocusMode == null) {
+                for (int i = 0; i < mDefaultFocusModes.length; i++) {
+                    String mode = mDefaultFocusModes[i];
+                    if (isSupported(mode, supportedFocusModes)) {
+                        mFocusMode = mode;
+                        break;
+                    }
+                }
+            }
         }
-        if (!isSupported(mFocusMode, mParameters.getSupportedFocusModes())) {
+        if (!isSupported(mFocusMode, supportedFocusModes)) {
             // For some reasons, the driver does not support the current
             // focus mode. Fall back to auto.
             if (isSupported(Parameters.FOCUS_MODE_AUTO,
@@ -485,6 +465,9 @@ public class FocusManager {
 
     public int getCurrentFocusState() {
         return mState;
+    }
+    public boolean isFocusingSnapOnFinish() {
+        return mState == STATE_FOCUSING_SNAP_ON_FINISH;
     }
 
     public void removeMessages() {

@@ -17,6 +17,7 @@
 package com.android.camera;
 
 import com.android.camera.ui.PopupManager;
+import com.android.camera.ui.Rotatable;
 import com.android.camera.ui.RotateImageView;
 
 import android.content.Context;
@@ -36,7 +37,7 @@ import android.widget.RelativeLayout;
  * a current mode indicator.
  */
 public class ModePicker extends RelativeLayout implements View.OnClickListener,
-    PopupManager.OnOtherPopupShowedListener {
+    PopupManager.OnOtherPopupShowedListener, Rotatable {
     public static final int MODE_CAMERA = 0;
     public static final int MODE_VIDEO = 1;
     public static final int MODE_PANORAMA = 2;
@@ -190,11 +191,11 @@ public class ModePicker extends RelativeLayout implements View.OnClickListener,
         return true;
     }
 
-    public void setDegree(int degree) {
+    public void setOrientation(int orientation) {
         for (int i = 0; i < MODE_NUM; ++i) {
-            mModeSelectionIcon[i].setDegree(degree);
+            mModeSelectionIcon[i].setOrientation(orientation);
             if (mCurrentModeFrame != null) {
-                mCurrentModeIcon[i].setDegree(degree);
+                mCurrentModeIcon[i].setOrientation(orientation);
             }
         }
     }
@@ -224,10 +225,13 @@ public class ModePicker extends RelativeLayout implements View.OnClickListener,
     }
 
     private void updateModeState() {
-        // Grey-out the unselected icons.
-        for (int i = 0; i < MODE_NUM; ++i) {
-            highlightView(mModeSelectionIcon[i], (i == mCurrentMode));
+        // Grey-out the unselected icons for Phone UI.
+        if (mCurrentModeFrame != null) {
+            for (int i = 0; i < MODE_NUM; ++i) {
+                highlightView(mModeSelectionIcon[i], (i == mCurrentMode));
+            }
         }
+
         // Update the current mode icons on the Phone UI. The selected mode
         // should be in the center of the current mode icon bar.
         if (mCurrentModeFrame != null) {

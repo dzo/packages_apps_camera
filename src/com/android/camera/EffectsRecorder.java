@@ -32,13 +32,12 @@ import android.filterpacks.videosrc.SurfaceTextureSource.SurfaceTextureSourceLis
 
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.hardware.CameraSound;
 import android.media.MediaRecorder;
 import android.media.CamcorderProfile;
-import android.os.ConditionVariable;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.ParcelFileDescriptor;
-import android.os.SystemProperties;
 import android.util.Log;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -73,6 +72,7 @@ public class EffectsRecorder {
     public static final int  EFFECT_MSG_SWITCHING_EFFECT = 2;
     public static final int  EFFECT_MSG_EFFECTS_STOPPED  = 3;
     public static final int  EFFECT_MSG_RECORDING_DONE   = 4;
+    public static final int  EFFECT_MSG_PREVIEW_RUNNING  = 5;
 
     private Context mContext;
     private Handler mHandler;
@@ -93,6 +93,7 @@ public class EffectsRecorder {
     private long mMaxFileSize = 0;
     private int mMaxDurationMs = 0;
     private int mCameraFacing = Camera.CameraInfo.CAMERA_FACING_BACK;
+    private boolean mAppIsLandscape;
 
     private int mEffect = EFFECT_NONE;
     private int mCurrentEffect = EFFECT_NONE;
@@ -107,9 +108,6 @@ public class EffectsRecorder {
 
     private SurfaceTexture mTextureSource;
 
-    private static final String mVideoRecordSound = "/system/media/audio/ui/VideoRecord.ogg";
-    private SoundPlayer mRecordSound;
-
     private static final int STATE_CONFIGURE              = 0;
     private static final int STATE_WAITING_FOR_SURFACE    = 1;
     private static final int STATE_STARTING_PREVIEW       = 2;
@@ -120,6 +118,7 @@ public class EffectsRecorder {
 
     private boolean mLogVerbose = Log.isLoggable(TAG, Log.VERBOSE);
     private static final String TAG = "effectsrecorder";
+    private CameraSound mCameraSound;
 
     /** Determine if a given effect is supported at runtime
      * Some effects require libraries not available on all devices
@@ -139,28 +138,7 @@ public class EffectsRecorder {
         if (mLogVerbose) Log.v(TAG, "EffectsRecorder created (" + this + ")");
         mContext = context;
         mHandler = new Handler(Looper.getMainLooper());
-
-        // Construct sound player; use enforced sound output if necessary
-        File recordSoundFile = new File(mVideoRecordSound);
-        try {
-            ParcelFileDescriptor recordSoundParcel =
-                    ParcelFileDescriptor.open(recordSoundFile,
-                            ParcelFileDescriptor.MODE_READ_ONLY);
-            AssetFileDescriptor recordSoundAsset =
-                    new AssetFileDescriptor(recordSoundParcel, 0,
-                                            AssetFileDescriptor.UNKNOWN_LENGTH);
-            if (SystemProperties.get("ro.camera.sound.forced", "0").equals("0")) {
-                if (mLogVerbose) Log.v(TAG, "Standard recording sound");
-                mRecordSound = new SoundPlayer(recordSoundAsset, false);
-            } else {
-                if (mLogVerbose) Log.v(TAG, "Forced recording sound");
-                mRecordSound = new SoundPlayer(recordSoundAsset, true);
-            }
-        } catch (java.io.FileNotFoundException e) {
-            Log.e(TAG, "System video record sound not found");
-            mRecordSound = null;
-        }
-
+        mCameraSound = new CameraSound();
     }
 
     public void setCamera(Camera cameraDevice) {
@@ -375,6 +353,16 @@ public class EffectsRecorder {
         setRecordingOrientation();
     }
 
+    /** Passes the native orientation of the Camera app (device dependent)
+     * to allow for correct output aspect ratio. Defaults to portrait */
+    public void setAppToLandscape(boolean landscape) {
+        if (mState != STATE_CONFIGURE) {
+            throw new RuntimeException(
+                "setAppToLandscape called after configuration!");
+        }
+        mAppIsLandscape = landscape;
+    }
+
     public void setCameraFacing(int facing) {
         switch (mState) {
             case STATE_RELEASED:
@@ -419,7 +407,12 @@ public class EffectsRecorder {
             Log.v(TAG, "Effects framework initializing. Recording size "
                   + mProfile.videoFrameWidth + ", " + mProfile.videoFrameHeight);
         }
-
+        if (!mAppIsLandscape) {
+            int tmp;
+            tmp = mProfile.videoFrameWidth;
+            mProfile.videoFrameWidth = mProfile.videoFrameHeight;
+            mProfile.videoFrameHeight = tmp;
+        }
         mGraphEnv.addReferences(
                 "textureSourceCallback", mSourceReadyCallback,
                 "recordingWidth", mProfile.videoFrameWidth,
@@ -498,6 +491,13 @@ public class EffectsRecorder {
                 Filter backgroundSrc = mRunner.getGraph().getFilter("background");
                 backgroundSrc.setInputValue("sourceUrl",
                                             (String)mEffectParameter);
+                // For front camera, the background video needs to be mirrored in the
+                // backdropper filter
+                if (mCameraFacing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+                    Filter replacer = mRunner.getGraph().getFilter("replacer");
+                    replacer.setInputValue("mirrorBg", true);
+                    if (mLogVerbose) Log.v(TAG, "Setting the background to be mirrored");
+                }
                 break;
             default:
                 break;
@@ -611,6 +611,9 @@ public class EffectsRecorder {
                 mState = STATE_PREVIEW;
 
                 if (mLogVerbose) Log.v(TAG, "Start preview/effect switch complete");
+
+                // Sending a message to listener that preview is complete
+                sendMessage(mCurrentEffect, EFFECT_MSG_PREVIEW_RUNNING);
             }
         }
     };
@@ -690,7 +693,7 @@ public class EffectsRecorder {
         recorder.setInputValue("maxFileSize", mMaxFileSize);
         recorder.setInputValue("maxDurationMs", mMaxDurationMs);
         recorder.setInputValue("recording", true);
-        if (mRecordSound != null) mRecordSound.play();
+        mCameraSound.playSound(CameraSound.START_VIDEO_RECORDING);
         mState = STATE_RECORD;
     }
 
@@ -710,7 +713,7 @@ public class EffectsRecorder {
         }
         Filter recorder = mRunner.getGraph().getFilter("recorder");
         recorder.setInputValue("recording", false);
-        if (mRecordSound != null) mRecordSound.play();
+        mCameraSound.playSound(CameraSound.STOP_VIDEO_RECORDING);
         mState = STATE_PREVIEW;
     }
 
@@ -740,6 +743,7 @@ public class EffectsRecorder {
         } catch(IOException e) {
             throw new RuntimeException("Unable to connect camera to effect input", e);
         }
+        mCameraSound.release();
 
         mState = STATE_CONFIGURE;
         mOldRunner = mRunner;
@@ -798,7 +802,13 @@ public class EffectsRecorder {
                 if (result == GraphRunner.RESULT_ERROR) {
                     // Handle error case
                     Log.e(TAG, "Error running filter graph!");
-                    raiseError(mRunner == null ? null : mRunner.getError());
+                    Exception e = null;
+                    if (mRunner != null) {
+                        e = mRunner.getError();
+                    } else if (mOldRunner != null) {
+                        e = mOldRunner.getError();
+                    }
+                    raiseError(e);
                 }
                 if (mOldRunner != null) {
                     // Tear down old graph if available
@@ -842,7 +852,6 @@ public class EffectsRecorder {
                 stopPreview();
                 // Fall-through
             default:
-                mRecordSound.release();
                 mState = STATE_RELEASED;
                 break;
         }

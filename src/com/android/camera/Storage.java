@@ -106,12 +106,22 @@ public class Storage {
             values.put(ImageColumns.LONGITUDE, location.getLongitude());
         }
 
-        Uri uri = resolver.insert(Images.Media.EXTERNAL_CONTENT_URI, values);
-        if (uri == null) {
-            Log.e(TAG, "Failed to write MediaStore");
-            return null;
+        Uri uri = null;
+        try {
+            uri = resolver.insert(Images.Media.EXTERNAL_CONTENT_URI, values);
+        } catch (Throwable th)  {
+            // This can happen when the external volume is already mounted, but
+            // MediaScanner has not notify MediaProvider to add that volume.
+            // The picture is still safe and MediaScanner will find it and
+            // insert it into MediaProvider. The only problem is that the user
+            // cannot click the thumbnail to review the picture.
+            Log.e(TAG, "Failed to write MediaStore" + th);
         }
         return uri;
+    }
+
+    public static String generateFilepath(String title) {
+        return DIRECTORY + '/' + title + ".jpg";
     }
 
     public static long getAvailableSpace() {

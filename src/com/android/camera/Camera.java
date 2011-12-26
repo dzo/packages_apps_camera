@@ -18,9 +18,11 @@ package com.android.camera;
 import com.android.camera.ui.CameraPicker;
 import com.android.camera.ui.FaceView;
 import com.android.camera.ui.IndicatorControlContainer;
+import com.android.camera.ui.PopupManager;
 import com.android.camera.ui.Rotatable;
 import com.android.camera.ui.RotateImageView;
 import com.android.camera.ui.RotateLayout;
+import com.android.camera.ui.RotateTextToast;
 import com.android.camera.ui.SharePopup;
 import com.android.camera.ui.ZoomControl;
 
@@ -33,6 +35,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences.Editor;
 import android.content.res.Configuration;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.hardware.Camera.CameraInfo;
 import android.hardware.Camera.Face;
@@ -40,6 +43,7 @@ import android.hardware.Camera.FaceDetectionListener;
 import android.hardware.Camera.Parameters;
 import android.hardware.Camera.PictureCallback;
 import android.hardware.Camera.Size;
+import android.hardware.CameraSound;
 import android.location.Location;
 import android.media.CameraProfile;
 import android.net.Uri;
@@ -63,11 +67,13 @@ import android.view.OrientationEventListener;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AnimationUtils;
 import android.widget.ProgressBar;
 import android.widget.SeekBar;
 import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -94,7 +100,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         View.OnTouchListener, ShutterButton.OnShutterButtonListener,
         SurfaceHolder.Callback, ModePicker.OnModeChangeListener,
         FaceDetectionListener, CameraPreference.OnPreferenceChangedListener,
-        LocationManager.Listener, ShutterButton.OnShutterButtonLongPressListener {
+        LocationManager.Listener {
 
     private static final String TAG = "camera";
 
@@ -140,8 +146,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private static final int SET_CAMERA_PARAMETERS_WHEN_IDLE = 4;
     private static final int CHECK_DISPLAY_ROTATION = 5;
     private static final int SHOW_TAP_TO_FOCUS_TOAST = 6;
-    private static final int DISMISS_TAP_TO_FOCUS_TOAST = 7;
-    private static final int UPDATE_THUMBNAIL = 8;
+    private static final int UPDATE_THUMBNAIL = 7;
 
     private static final int SET_SKIN_TONE_FACTOR = 9;
 
@@ -195,10 +200,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private GestureDetector mPopupGestureDetector;
     private boolean mOpenCameraFail = false;
     private boolean mCameraDisabled = false;
+    private boolean mFaceDetectionStarted = false;
 
     private View mPreviewPanel;  // The container of PreviewFrameLayout.
     private PreviewFrameLayout mPreviewFrameLayout;
     private View mPreviewFrame;  // Preview frame area.
+    private RotateDialogController mRotateDialog;
 
     // A popup window that contains a bigger thumbnail and a list of apps to share.
     private SharePopup mSharePopup;
@@ -214,7 +221,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private RotateImageView mThumbnailView;
     private ModePicker mModePicker;
     private FaceView mFaceView;
-    private RotateLayout mFocusIndicator;
+    private RotateLayout mFocusAreaIndicator;
     private Rotatable mReviewCancelButton;
     private Rotatable mReviewDoneButton;
 
@@ -227,14 +234,21 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private String mCropValue;
     private Uri mSaveUri;
 
-    // On-screen indicator
-    private View mGpsNoSignalIndicator;
-    private View mGpsHasSignalIndicator;
+    // Small indicators which show the camera settings in the viewfinder.
     private TextView mExposureIndicator;
+    private ImageView mGpsIndicator;
+    private ImageView mFlashIndicator;
+    private ImageView mSceneIndicator;
+    private ImageView mWhiteBalanceIndicator;
+    private ImageView mFocusIndicator;
+    // A view group that contains all the small indicators.
+    private Rotatable mOnScreenIndicators;
 
     // We use a thread in ImageSaver to do the work of saving images and
     // generating thumbnails. This reduces the shot-to-shot time.
     private ImageSaver mImageSaver;
+
+    private CameraSound mCameraSound;
 
     private Runnable mDoSnapRunnable = new Runnable() {
         public void run() {
@@ -252,7 +266,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
      *
      * TODO: consider publishing by moving into MediaStore.
      */
-    private final static String EXTRA_QUICK_CAPTURE =
+    private static final String EXTRA_QUICK_CAPTURE =
             "android.intent.extra.quickCapture";
 
     // The display rotation in degrees. This is only valid when mCameraState is
@@ -384,14 +398,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                     break;
                 }
 
-                case DISMISS_TAP_TO_FOCUS_TOAST: {
-                    View v = findViewById(R.id.tap_to_focus_prompt);
-                    v.setVisibility(View.GONE);
-                    v.setAnimation(AnimationUtils.loadAnimation(Camera.this,
-                            R.anim.on_screen_hint_exit));
-                    break;
-                }
-
                 case UPDATE_THUMBNAIL: {
                     mImageSaver.updateThumbnail();
                     break;
@@ -458,18 +464,16 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         // Initialize shutter button.
         mShutterButton = (ShutterButton) findViewById(R.id.shutter_button);
         mShutterButton.setOnShutterButtonListener(this);
-        mShutterButton.setOnShutterButtonLongPressListener(this);
         mShutterButton.setVisibility(View.VISIBLE);
 
         // Initialize focus UI.
         mPreviewFrame = findViewById(R.id.camera_preview);
         mPreviewFrame.setOnTouchListener(this);
-        mFocusIndicator = (RotateLayout) findViewById(R.id.focus_indicator_rotate_layout);
+        mFocusAreaIndicator = (RotateLayout) findViewById(R.id.focus_indicator_rotate_layout);
         CameraInfo info = CameraHolder.instance().getCameraInfo()[mCameraId];
         boolean mirror = (info.facing == CameraInfo.CAMERA_FACING_FRONT);
-        mFocusManager.initialize(mFocusIndicator, mPreviewFrame, mFaceView, this,
+        mFocusManager.initialize(mFocusAreaIndicator, mPreviewFrame, mFaceView, this,
                 mirror, mDisplayOrientation);
-        mFocusManager.initializeSoundPlayer(getResources().openRawResourceFd(R.raw.camera_focus));
         mImageSaver = new ImageSaver();
         Util.initializeScreenBrightness(getWindow(), getContentResolver());
         installIntentFilter();
@@ -479,10 +483,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         mGraphView.setCameraObject(Camera.this);
 
         initializeZoom();
+        updateOnScreenIndicators();
         startFaceDetection();
         // Show the tap to focus toast if this is the first start.
         if (mFocusAreaSupported &&
-                mPreferences.getBoolean(CameraSettings.KEY_TAP_TO_FOCUS_PROMPT_SHOWN, true)) {
+                mPreferences.getBoolean(CameraSettings.KEY_CAMERA_FIRST_USE_HINT_SHOWN, true)) {
             // Delay the toast for one second to wait for orientation.
             mHandler.sendEmptyMessageDelayed(SHOW_TAP_TO_FOCUS_TOAST, 1000);
         }
@@ -533,7 +538,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         mLocationManager.recordLocation(recordLocation);
 
         installIntentFilter();
-        mFocusManager.initializeSoundPlayer(getResources().openRawResourceFd(R.raw.camera_focus));
         mImageSaver = new ImageSaver();
         initializeZoom();
         keepMediaProviderInstance();
@@ -614,7 +618,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     @Override
     public void startFaceDetection() {
+        if (mFaceDetectionStarted || mCameraState != IDLE) return;
         if (mParameters.getMaxNumDetectedFaces() > 0) {
+            mFaceDetectionStarted = true;
             mFaceView = (FaceView) findViewById(R.id.face_view);
             mFaceView.clear();
             mFaceView.setVisibility(View.VISIBLE);
@@ -632,7 +638,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     @Override
     public void stopFaceDetection() {
+        if (!mFaceDetectionStarted) return;
         if (mParameters.getMaxNumDetectedFaces() > 0) {
+            mFaceDetectionStarted = false;
             mCameraDevice.setFaceDetectionListener(null);
           if (mFaceDetect == FACE_DETECTION_ON) {
             mCameraDevice.stopFaceDetection();
@@ -693,39 +701,40 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     };
 
     private void initOnScreenIndicator() {
-        mGpsNoSignalIndicator = findViewById(R.id.onscreen_gps_indicator_no_signal);
-        mGpsHasSignalIndicator = findViewById(R.id.onscreen_gps_indicator_on);
+        mGpsIndicator = (ImageView) findViewById(R.id.onscreen_gps_indicator);
         mExposureIndicator = (TextView) findViewById(R.id.onscreen_exposure_indicator);
+        mFlashIndicator = (ImageView) findViewById(R.id.onscreen_flash_indicator);
+        mSceneIndicator = (ImageView) findViewById(R.id.onscreen_scene_indicator);
+        mWhiteBalanceIndicator =
+                (ImageView) findViewById(R.id.onscreen_white_balance_indicator);
+        mFocusIndicator = (ImageView) findViewById(R.id.onscreen_focus_indicator);
     }
 
     @Override
     public void showGpsOnScreenIndicator(boolean hasSignal) {
-        if (hasSignal) {
-            if (mGpsNoSignalIndicator != null) {
-                mGpsNoSignalIndicator.setVisibility(View.GONE);
-            }
-            if (mGpsHasSignalIndicator != null) {
-                mGpsHasSignalIndicator.setVisibility(View.VISIBLE);
-            }
-        } else {
-            if (mGpsNoSignalIndicator != null) {
-                mGpsNoSignalIndicator.setVisibility(View.VISIBLE);
-            }
-            if (mGpsHasSignalIndicator != null) {
-                mGpsHasSignalIndicator.setVisibility(View.GONE);
-            }
+        if (mGpsIndicator == null) {
+            return;
         }
+        if (hasSignal) {
+            mGpsIndicator.setImageResource(R.drawable.ic_viewfinder_gps_on);
+        } else {
+            mGpsIndicator.setImageResource(R.drawable.ic_viewfinder_gps_no_signal);
+        }
+        mGpsIndicator.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void hideGpsOnScreenIndicator() {
-        if (mGpsNoSignalIndicator != null) mGpsNoSignalIndicator.setVisibility(View.GONE);
-        if (mGpsHasSignalIndicator != null) mGpsHasSignalIndicator.setVisibility(View.GONE);
+        if (mGpsIndicator == null) {
+            return;
+        }
+        mGpsIndicator.setVisibility(View.GONE);
     }
 
     private void updateExposureOnScreenIndicator(int value) {
-        if (mExposureIndicator == null) return;
-
+        if (mExposureIndicator == null) {
+            return;
+        }
         if (value == 0) {
             mExposureIndicator.setText("");
             mExposureIndicator.setVisibility(View.GONE);
@@ -740,6 +749,71 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
     }
 
+    private void updateFlashOnScreenIndicator(String value) {
+        if (mFlashIndicator == null) {
+            return;
+        }
+        if (Parameters.FLASH_MODE_AUTO.equals(value)) {
+            mFlashIndicator.setImageResource(R.drawable.ic_indicators_landscape_flash_auto);
+            mFlashIndicator.setVisibility(View.VISIBLE);
+        } else if (Parameters.FLASH_MODE_ON.equals(value)) {
+            mFlashIndicator.setImageResource(R.drawable.ic_indicators_landscape_flash_on);
+            mFlashIndicator.setVisibility(View.VISIBLE);
+        } else if (Parameters.FLASH_MODE_OFF.equals(value)) {
+            mFlashIndicator.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateSceneOnScreenIndicator(boolean isVisible) {
+        if (mSceneIndicator == null) {
+            return;
+        }
+        mSceneIndicator.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+    }
+
+    private void updateWhiteBalanceOnScreenIndicator(String value) {
+        if (mWhiteBalanceIndicator == null) {
+            return;
+        }
+        if (Parameters.WHITE_BALANCE_AUTO.equals(value)) {
+            mWhiteBalanceIndicator.setVisibility(View.GONE);
+        } else {
+            if (Parameters.WHITE_BALANCE_FLUORESCENT.equals(value)) {
+                mWhiteBalanceIndicator.setImageResource(R.drawable.ic_indicators_fluorescent);
+            } else if (Parameters.WHITE_BALANCE_INCANDESCENT.equals(value)) {
+                mWhiteBalanceIndicator.setImageResource(R.drawable.ic_indicators_incandescent);
+            } else if (Parameters.WHITE_BALANCE_DAYLIGHT.equals(value)) {
+                mWhiteBalanceIndicator.setImageResource(R.drawable.ic_indicators_sunlight);
+            } else if (Parameters.WHITE_BALANCE_CLOUDY_DAYLIGHT.equals(value)) {
+                mWhiteBalanceIndicator.setImageResource(R.drawable.ic_indicators_cloudy);
+            }
+            mWhiteBalanceIndicator.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void updateFocusOnScreenIndicator(String value) {
+        if (mFocusIndicator == null) {
+            return;
+        }
+        if (Parameters.FOCUS_MODE_INFINITY.equals(value)) {
+            mFocusIndicator.setImageResource(R.drawable.ic_indicators_landscape);
+            mFocusIndicator.setVisibility(View.VISIBLE);
+        } else if (Parameters.FOCUS_MODE_MACRO.equals(value)) {
+            mFocusIndicator.setImageResource(R.drawable.ic_indicators_macro);
+            mFocusIndicator.setVisibility(View.VISIBLE);
+        } else {
+            mFocusIndicator.setVisibility(View.GONE);
+        }
+    }
+
+    private void updateOnScreenIndicators() {
+        boolean isAutoScene = !(Parameters.SCENE_MODE_AUTO.equals(mParameters.getSceneMode()));
+        updateSceneOnScreenIndicator(isAutoScene);
+        updateExposureOnScreenIndicator(CameraSettings.readExposure(mPreferences));
+        updateFlashOnScreenIndicator(mParameters.getFlashMode());
+        updateWhiteBalanceOnScreenIndicator(mParameters.getWhiteBalance());
+        updateFocusOnScreenIndicator(mParameters.getFocusMode());
+    }
     private final class ShutterCallback
             implements android.hardware.Camera.ShutterCallback {
         public void onShutter() {
@@ -818,7 +892,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                     + mPictureDisplayedToJpegCallbackTime + "ms");
 
             if (!mIsImageCaptureIntent) {
-                    enableCameraControls(true);
                     startPreview();
                     startFaceDetection();
             }
@@ -896,12 +969,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
             mAutoFocusTime = System.currentTimeMillis() - mFocusStartTime;
             Log.v(TAG, "mAutoFocusTime = " + mAutoFocusTime + "ms");
+            setCameraState(IDLE);
             mFocusManager.onAutoFocus(focused);
-            // If focus completes and the snapshot is not started, enable the
-            // controls.
-            if (mFocusManager.isFocusCompleted()) {
-                enableCameraControls(true);
-            }
         }
     }
 
@@ -981,7 +1050,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             r.width = width;
             r.height = height;
             r.dateTaken = System.currentTimeMillis();
-            r.previewWidth = mPreviewFrameLayout.getWidth();
+            if (getRequestedOrientation() == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+                r.previewWidth = mPreviewFrameLayout.getHeight();
+            } else {
+                r.previewWidth = mPreviewFrameLayout.getWidth();
+            }
             synchronized (this) {
                 while (mQueue.size() >= QUEUE_LIMIT) {
                     try {
@@ -1109,6 +1182,20 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
     }
 
+    private void setCameraState(int state) {
+        mCameraState = state;
+        switch (state) {
+            case SNAPSHOT_IN_PROGRESS:
+            case FOCUSING:
+                enableCameraControls(false);
+                break;
+            case IDLE:
+            case PREVIEW_STOPPED:
+                enableCameraControls(true);
+                break;
+        }
+    }
+
     @Override
     public boolean capture() {
         // If we are already in the middle of taking a snapshot then ignore.
@@ -1117,7 +1204,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
         mCaptureStartTime = System.currentTimeMillis();
         mPostViewPictureCallbackTime = 0;
-        enableCameraControls(false);
         mJpegImageData = null;
 
         // Set rotation and gps data.
@@ -1141,16 +1227,22 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         mCameraDevice.takePicture(mShutterCallback, mRawPictureCallback,
                 mPostViewPictureCallback, new JpegPictureCallback(loc));
-        mCameraState = SNAPSHOT_IN_PROGRESS;
         if (mSnapshotMode == CameraInfo.CAMERA_SUPPORT_MODE_ZSL) {
                 zslrestartPreview = false;
         }
+        mFaceDetectionStarted = false;
+        setCameraState(SNAPSHOT_IN_PROGRESS);
         return true;
     }
 
     @Override
     public void setFocusParameters() {
         setCameraParameters(UPDATE_PARAM_PREFERENCE);
+    }
+
+    @Override
+    public void playSound(int soundId) {
+        mCameraSound.playSound(soundId);
     }
 
     private boolean saveDataToFile(String filePath, byte[] data) {
@@ -1201,8 +1293,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         getPreferredCameraId();
-        mFocusManager = new FocusManager(mPreferences,
-                getString(R.string.pref_camera_focusmode_default));
+        String[] defaultFocusModes = getResources().getStringArray(
+                R.array.pref_camera_focusmode_default_array);
+        mFocusManager = new FocusManager(mPreferences, defaultFocusModes);
 
         /*
          * To reduce startup time, we start the camera open and preview threads.
@@ -1221,6 +1314,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mThumbnailView.enableFilter(false);
             mThumbnailView.setVisibility(View.VISIBLE);
         }
+
+        mRotateDialog = new RotateDialogController(this, R.layout.rotate_dialog);
 
         mPreferences.setLocalId(this, mCameraId);
         CameraSettings.upgradeLocalPreferences(mPreferences.getLocal());
@@ -1283,6 +1378,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
 
         mZoomControl = (ZoomControl) findViewById(R.id.zoom_control);
+        mOnScreenIndicators = (Rotatable) findViewById(R.id.on_screen_indicators);
         mLocationManager = new LocationManager(this, this);
 
         mBackCameraId = CameraHolder.instance().getBackCameraId();
@@ -1300,6 +1396,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         // Do this after starting preview because it depends on camera
         // parameters.
         initializeIndicatorControl();
+        mCameraSound = new CameraSound();
 
         // Make sure preview is started.
         try {
@@ -1407,16 +1504,13 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
     }
 
-    private void setOrientationIndicator(int degree) {
-        if (mThumbnailView != null) mThumbnailView.setDegree(degree);
-        if (mModePicker != null) mModePicker.setDegree(degree);
-        if (mSharePopup != null) mSharePopup.setOrientation(degree);
-        if (mIndicatorControlContainer != null) mIndicatorControlContainer.setDegree(degree);
-        if (mZoomControl != null) mZoomControl.setDegree(degree);
-        if (mFocusIndicator != null) mFocusIndicator.setOrientation(degree);
-        if (mFaceView != null) mFaceView.setOrientation(degree);
-        if (mReviewCancelButton != null) mReviewCancelButton.setOrientation(degree);
-        if (mReviewDoneButton != null) mReviewDoneButton.setOrientation(degree);
+    private void setOrientationIndicator(int orientation) {
+        Rotatable[] indicators = {mThumbnailView, mModePicker, mSharePopup,
+                mIndicatorControlContainer, mZoomControl, mFocusAreaIndicator, mFaceView,
+                mReviewCancelButton, mReviewDoneButton, mRotateDialog, mOnScreenIndicators};
+        for (Rotatable indicator : indicators) {
+            if (indicator != null) indicator.setOrientation(orientation);
+        }
     }
 
     @Override
@@ -1573,8 +1667,10 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         // If the user wants to do a snapshot while the previous one is still
         // in progress, remember the fact and do it after we finish the previous
-        // one and re-start the preview.
-        if (mCameraState == SNAPSHOT_IN_PROGRESS) {
+        // one and re-start the preview. Snapshot in progress also includes the
+        // state that autofocus is focusing and a picture will be taken when
+        // focus callback arrives.
+        if (mFocusManager.isFocusingSnapOnFinish() || mCameraState == SNAPSHOT_IN_PROGRESS) {
             mSnapshotOnIdle = true;
             return;
         }
@@ -1586,15 +1682,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mFocusManager.setZslEnable(false);
         }
         mFocusManager.doSnap();
-    }
-
-    @Override
-    public void onShutterButtonLongPressed() {
-        if (mPausing || mCameraState == SNAPSHOT_IN_PROGRESS
-                || mCameraDevice == null || mPicturesRemaining <= 0) return;
-
-        Log.v(TAG, "onShutterButtonLongPressed");
-        mFocusManager.shutterLongPressed();
     }
 
     private OnScreenHint mStorageHint;
@@ -1642,7 +1729,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         if (mOpenCameraFail || mCameraDisabled) return;
 
         mPausing = false;
-
         mJpegPictureCallbackTime = 0;
         mZoomValue = 0;
 
@@ -1653,7 +1739,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 initializeCapabilities();
                 resetExposureCompensation();
                 startPreview();
-                if (mFirstTimeInitialized) startFaceDetection();
+                startFaceDetection();
             } catch (CameraHardwareException e) {
                 Util.showErrorAndFinish(this, R.string.cannot_connect_camera);
                 return;
@@ -1684,6 +1770,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mOnResumeTime = SystemClock.uptimeMillis();
             mHandler.sendEmptyMessageDelayed(CHECK_DISPLAY_ROTATION, 100);
         }
+        // Dismiss open menu if exists.
+        PopupManager.getInstance(this).notifyShowPopup(null);
     }
 
     private void resizeForPreviewAspectRatio() {
@@ -1714,6 +1802,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         stopPreview();
         // Close the camera now because other activities may need to use it.
         closeCamera();
+        if (mCameraSound != null) mCameraSound.release();
         resetScreenOn();
 
         // Clear UI.
@@ -1738,8 +1827,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
         if (mLocationManager != null) mLocationManager.recordLocation(false);
         updateExposureOnScreenIndicator(0);
-
-        mFocusManager.releaseSoundPlayer();
 
         if (mStorageHint != null) {
             mStorageHint.cancel();
@@ -1793,15 +1880,13 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     public void autoFocus() {
         mFocusStartTime = System.currentTimeMillis();
         mCameraDevice.autoFocus(mAutoFocusCallback);
-        mCameraState = FOCUSING;
-        enableCameraControls(false);
+        setCameraState(FOCUSING);
     }
 
     @Override
     public void cancelAutoFocus() {
         mCameraDevice.cancelAutoFocus();
-        mCameraState = IDLE;
-        enableCameraControls(true);
+        setCameraState(IDLE);
         setCameraParameters(UPDATE_PARAM_PREFERENCE);
     }
 
@@ -1950,7 +2035,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         // display rotation in onCreate may not be what we want.
         if (mCameraState == PREVIEW_STOPPED) {
             startPreview();
-            if (mFirstTimeInitialized) startFaceDetection();
+            startFaceDetection();
         } else {
             if (Util.getDisplayRotation(this) != mDisplayRotation) {
                 setDisplayOrientation();
@@ -1984,11 +2069,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private void closeCamera() {
         if (mCameraDevice != null) {
             CameraHolder.instance().release();
+            mFaceDetectionStarted = false;
             mCameraDevice.setZoomChangeListener(null);
             mCameraDevice.setFaceDetectionListener(null);
             mCameraDevice.setErrorCallback(null);
             mCameraDevice = null;
-            mCameraState = PREVIEW_STOPPED;
+            setCameraState(PREVIEW_STOPPED);
             mFocusManager.onCameraReleased();
         }
     }
@@ -2034,13 +2120,15 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         setPreviewDisplay(mSurfaceHolder);
         setDisplayOrientation();
 
-        mFocusManager.setAeAwbLock(false); // Unlock AE and AWB.
-        setCameraParameters(UPDATE_PARAM_ALL);
-        // If the focus mode is continuous autofocus, call cancelAutoFocus to
-        // resume it because it may have been paused by autoFocus call.
-        if (Parameters.FOCUS_MODE_CONTINUOUS_PICTURE.equals(mParameters.getFocusMode())) {
-            mCameraDevice.cancelAutoFocus();
+        if (!mSnapshotOnIdle) {
+            // If the focus mode is continuous autofocus, call cancelAutoFocus to
+            // resume it because it may have been paused by autoFocus call.
+            if (Parameters.FOCUS_MODE_CONTINUOUS_PICTURE.equals(mFocusManager.getFocusMode())) {
+                mCameraDevice.cancelAutoFocus();
+            }
+            mFocusManager.setAeAwbLock(false); // Unlock AE and AWB.
         }
+        setCameraParameters(UPDATE_PARAM_ALL);
 
         // Inform the mainthread to go on the UI initialization.
         if (mCameraPreviewThread != null) {
@@ -2057,7 +2145,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
 
         mZoomState = ZOOM_STOPPED;
-        mCameraState = IDLE;
+        setCameraState(IDLE);
         mFocusManager.onPreviewStarted();
 
         if (mSnapshotOnIdle) {
@@ -2070,8 +2158,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             Log.v(TAG, "stopPreview");
             mCameraDevice.cancelAutoFocus(); // Reset the focus.
             mCameraDevice.stopPreview();
+            mFaceDetectionStarted = false;
         }
-        mCameraState = PREVIEW_STOPPED;
+        setCameraState(PREVIEW_STOPPED);
         mFocusManager.onPreviewStopped();
     }
 
@@ -2550,8 +2639,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private void hidePostCaptureAlert() {
         if (mIsImageCaptureIntent) {
-            enableCameraControls(true);
-
             int[] pickIds = {R.id.btn_retake, R.id.btn_done};
             for (int id : pickIds) {
                 Util.fadeOut(findViewById(id));
@@ -2667,8 +2754,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             setCameraParametersWhenIdle(UPDATE_PARAM_PREFERENCE);
         }
 
-        int exposureValue = CameraSettings.readExposure(mPreferences);
-        updateExposureOnScreenIndicator(exposureValue);
+        updateOnScreenIndicators();
     }
 
     @Override
@@ -2695,10 +2781,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 restorePreferences();
             }
         };
-        MenuHelper.confirmAction(this,
+        mRotateDialog.showAlertDialog(
                 getString(R.string.confirm_restore_title),
                 getString(R.string.confirm_restore_message),
-                runnable);
+                getString(android.R.string.ok), runnable,
+                getString(android.R.string.cancel), null);
     }
 
     private void restorePreferences() {
@@ -2743,15 +2830,10 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     }
 
     private void showTapToFocusToast() {
-        // Show the toast.
-        RotateLayout v = (RotateLayout) findViewById(R.id.tap_to_focus_prompt);
-        v.setOrientation(mOrientationCompensation);
-        v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.on_screen_hint_enter));
-        v.setVisibility(View.VISIBLE);
-        mHandler.sendEmptyMessageDelayed(DISMISS_TAP_TO_FOCUS_TOAST, 5000);
+        new RotateTextToast(this, R.string.tap_to_focus, mOrientation).show();
         // Clear the preference.
         Editor editor = mPreferences.edit();
-        editor.putBoolean(CameraSettings.KEY_TAP_TO_FOCUS_PROMPT_SHOWN, false);
+        editor.putBoolean(CameraSettings.KEY_CAMERA_FIRST_USE_HINT_SHOWN, false);
         editor.apply();
     }
 

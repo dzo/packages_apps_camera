@@ -38,15 +38,14 @@ public abstract class AbstractIndicatorButton extends RotateImageView implements
     private final int MSG_DISMISS_POPUP = 0;
     private IndicatorChangeListener mListener;
 
-
     public static interface IndicatorChangeListener {
         public void onShowIndicator(View view, boolean showed);
     }
 
     public AbstractIndicatorButton(Context context) {
         super(context);
-        mFadeIn = AnimationUtils.loadAnimation(context, R.anim.grow_fade_in_from_right);
-        mFadeOut = AnimationUtils.loadAnimation(context, R.anim.shrink_fade_out_from_right);
+        mFadeIn = AnimationUtils.loadAnimation(context, R.anim.setting_popup_grow_fade_in);
+        mFadeOut = AnimationUtils.loadAnimation(context, R.anim.setting_popup_shrink_fade_out);
         HIGHLIGHT_COLOR = context.getResources().getColor(R.color.review_control_pressed_color);
         setScaleType(ImageView.ScaleType.CENTER);
         PopupManager.getInstance(context).setOnOtherPopupShowedListener(this);
@@ -106,16 +105,17 @@ public abstract class AbstractIndicatorButton extends RotateImageView implements
     }
 
     @Override
-    public void setDegree(int degree) {
-        super.setDegree(degree);
+    public void setOrientation(int orientation) {
+        super.setOrientation(orientation);
         if (mPopup != null) {
-            mPopup.setOrientation(degree);
+            mPopup.setOrientation(orientation);
         }
     }
 
     abstract protected void initializePopup();
 
     private void showPopup() {
+        setPressed(true);
         mHandler.removeMessages(MSG_DISMISS_POPUP);
         if (mPopup == null) initializePopup();
 
@@ -127,6 +127,7 @@ public abstract class AbstractIndicatorButton extends RotateImageView implements
     }
 
     public boolean dismissPopup() {
+        setPressed(false);
         mHandler.removeMessages(MSG_DISMISS_POPUP);
         if (mPopup != null && mPopup.getVisibility() == View.VISIBLE) {
             mPopup.clearAnimation();

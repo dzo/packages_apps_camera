@@ -19,9 +19,11 @@ package com.android.camera;
 import com.android.camera.ui.CameraPicker;
 import com.android.camera.ui.IndicatorControlContainer;
 import com.android.camera.ui.IndicatorControlWheelContainer;
+import com.android.camera.ui.PopupManager;
 import com.android.camera.ui.Rotatable;
 import com.android.camera.ui.RotateImageView;
 import com.android.camera.ui.RotateLayout;
+import com.android.camera.ui.RotateTextToast;
 import com.android.camera.ui.SharePopup;
 import com.android.camera.ui.ZoomControl;
 
@@ -32,6 +34,8 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences.Editor;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.hardware.Camera.CameraInfo;
@@ -64,6 +68,7 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -106,6 +111,7 @@ public class VideoCamera extends ActivityBase
     private static final int CLEAR_SCREEN_DELAY = 4;
     private static final int UPDATE_RECORD_TIME = 5;
     private static final int ENABLE_SHUTTER_BUTTON = 6;
+    private static final int SHOW_TAP_TO_SNAPSHOT_TOAST = 7;
 
     private static final int SCREEN_DELAY = 2 * 60 * 1000;
 
@@ -123,7 +129,7 @@ public class VideoCamera extends ActivityBase
             CamcorderProfile.QUALITY_TIME_LAPSE_720P,
             CamcorderProfile.QUALITY_TIME_LAPSE_480P,
             CamcorderProfile.QUALITY_TIME_LAPSE_CIF,
-            1007, /* TODO: replace it with QUALITY_TIME_LAPSE_QVGA if public. */
+            CamcorderProfile.QUALITY_TIME_LAPSE_QVGA,
             CamcorderProfile.QUALITY_TIME_LAPSE_QCIF};
 
     private static final int[] VIDEO_QUALITY = {
@@ -136,7 +142,6 @@ public class VideoCamera extends ActivityBase
             CamcorderProfile.QUALITY_WQVGA,
             CamcorderProfile.QUALITY_CIF,
             CamcorderProfile.QUALITY_QVGA,
-            //7, /* TODO: replace it with CamcorderProfile.QUALITY_QVGA */
             CamcorderProfile.QUALITY_QCIF};
 
     /**
@@ -163,6 +168,7 @@ public class VideoCamera extends ActivityBase
     private int mSurfaceWidth;
     private int mSurfaceHeight;
     private View mReviewControl;
+    private RotateDialogController mRotateDialog;
 
     private Toast mNoShareToast;
     // An review image having same size as preview. It is displayed when
@@ -195,6 +201,7 @@ public class VideoCamera extends ActivityBase
 
     private MediaRecorder mMediaRecorder;
     private EffectsRecorder mEffectsRecorder;
+    private boolean mEffectsDisplayResult;
 
     private int mEffectType = EffectsRecorder.EFFECT_NONE;
     private Object mEffectParameter = null;
@@ -202,6 +209,7 @@ public class VideoCamera extends ActivityBase
     private String mPrefVideoEffectDefault;
     private boolean mResetEffect = true;
     public static final String RESET_EFFECT_EXTRA = "reset_effect";
+    public static final String BACKGROUND_URI_GALLERY_EXTRA = "background_uri_gallery";
 
     private boolean mMediaRecorderRecording = false;
     private long mRecordingStartTime;
@@ -382,6 +390,11 @@ public class VideoCamera extends ActivityBase
                     break;
                 }
 
+                case SHOW_TAP_TO_SNAPSHOT_TOAST: {
+                    showTapToSnapshotToast();
+                    break;
+                }
+
                 default:
                     Log.v(TAG, "Unhandled message: " + msg.what);
                     break;
@@ -445,6 +458,9 @@ public class VideoCamera extends ActivityBase
         // Do not reset the effect if users are switching between back and front
         // cameras.
         mResetEffect = getIntent().getBooleanExtra(RESET_EFFECT_EXTRA, true);
+        // If background replacement was on when the camera was switched, the
+        // background uri will be sent via the intent.
+        mEffectUriFromGallery = getIntent().getStringExtra(BACKGROUND_URI_GALLERY_EXTRA);
         resetEffect();
 
         /*
@@ -485,6 +501,8 @@ public class VideoCamera extends ActivityBase
             mModePicker.setOnModeChangeListener(this);
         }
 
+        mRotateDialog = new RotateDialogController(this, R.layout.rotate_dialog);
+
         mPreviewPanel = findViewById(R.id.frame_layout);
         mPreviewFrameLayout = (PreviewFrameLayout) findViewById(R.id.frame);
         mReviewImage = (ImageView) findViewById(R.id.review_image);
@@ -503,6 +521,16 @@ public class VideoCamera extends ActivityBase
         mShutterButton.setBackgroundResource(R.drawable.btn_shutter_video);
         mShutterButton.setOnShutterButtonListener(this);
         mShutterButton.requestFocus();
+
+        // Disable the shutter button if effects are ON since it might take
+        // a little more time for the effects preview to be ready. We do not
+        // want to allow recording before that happens. The shutter button
+        // will be enabled when we get the message from effectsrecorder that
+        // the preview is running. This becomes critical when the camera is
+        // swapped.
+        if (effectsActive()) {
+            mShutterButton.setEnabled(false);
+        }
 
         mRecordingTimeView = (TextView) findViewById(R.id.recording_time);
         mRecordingTimeRect = (RotateLayout) findViewById(R.id.recording_time_rect);
@@ -623,22 +651,27 @@ public class VideoCamera extends ActivityBase
                     setOrientationIndicator(mOrientationCompensation);
                 }
             }
+
+            // Show the toast after getting the first orientation changed.
+            if (mHandler.hasMessages(SHOW_TAP_TO_SNAPSHOT_TOAST)) {
+                mHandler.removeMessages(SHOW_TAP_TO_SNAPSHOT_TOAST);
+                showTapToSnapshotToast();
+            }
         }
     }
 
-    private void setOrientationIndicator(int degree) {
-        if (mThumbnailView != null) mThumbnailView.setDegree(degree);
-        if (mModePicker != null) mModePicker.setDegree(degree);
-        if (mSharePopup != null) mSharePopup.setOrientation(degree);
-        if (mBgLearningMessageRotater != null) mBgLearningMessageRotater.setOrientation(degree);
-        if (mIndicatorControlContainer != null) mIndicatorControlContainer.setDegree(degree);
-        if (mReviewDoneButton != null) mReviewDoneButton.setOrientation(degree);
-        if (mReviewPlayButton != null) mReviewPlayButton.setOrientation(degree);
-        if (mReviewCancelButton!= null) mReviewCancelButton.setOrientation(degree);
+    private void setOrientationIndicator(int orientation) {
+        Rotatable[] indicators = {mThumbnailView, mModePicker, mSharePopup,
+                mBgLearningMessageRotater, mIndicatorControlContainer,
+                mReviewDoneButton, mReviewPlayButton, mReviewCancelButton, mRotateDialog};
+        for (Rotatable indicator : indicators) {
+            if (indicator != null) indicator.setOrientation(orientation);
+        }
+
         // We change the orientation of the linearlayout only for phone UI because when in portrait
         // the width is not enough.
         if (mLabelsLinearLayout != null) {
-            if (((degree / 90) & 1) == 1) {
+            if (((orientation / 90) & 1) == 1) {
                 mLabelsLinearLayout.setOrientation(mLabelsLinearLayout.VERTICAL);
             } else {
                 mLabelsLinearLayout.setOrientation(mLabelsLinearLayout.HORIZONTAL);
@@ -687,14 +720,15 @@ public class VideoCamera extends ActivityBase
     }
 
     private void onStopVideoRecording(boolean valid) {
+        mEffectsDisplayResult = true;
         stopVideoRecording();
         if (mIsVideoCaptureIntent) {
             if (mQuickCapture) {
                 doReturnToCaller(valid);
-            } else {
+            } else if (!effectsActive()) {
                 showAlert();
             }
-        } else {
+        } else if (!effectsActive()) {
             getThumbnail();
         }
     }
@@ -706,6 +740,7 @@ public class VideoCamera extends ActivityBase
     @Override
     public void onShutterButtonClick() {
         if (collapseCameraControls()) return;
+
         boolean stop = mMediaRecorderRecording;
 
         if (stop) {
@@ -978,6 +1013,8 @@ public class VideoCamera extends ActivityBase
             mOnResumeTime = SystemClock.uptimeMillis();
             mHandler.sendEmptyMessageDelayed(CHECK_DISPLAY_ROTATION, 100);
         }
+        // Dismiss open menu if exists.
+        PopupManager.getInstance(this).notifyShowPopup(null);
     }
 
     private void setPreviewDisplay(SurfaceHolder holder) {
@@ -1053,12 +1090,13 @@ public class VideoCamera extends ActivityBase
         // This is similar to what mShutterButton.performClick() does,
         // but not quite the same.
         if (mMediaRecorderRecording) {
+            mEffectsDisplayResult = true;
             if (mIsVideoCaptureIntent) {
                 stopVideoRecording();
-                showAlert();
+                if (!effectsActive()) showAlert();
             } else {
                 stopVideoRecording();
-                getThumbnail();
+                if (!effectsActive()) getThumbnail();
             }
         } else {
             stopVideoRecording();
@@ -1371,12 +1409,18 @@ public class VideoCamera extends ActivityBase
         // If the mCameraDevice is null, then this activity is going to finish
         if (mCameraDevice == null) return;
 
+        boolean inLandscape =
+                (getRequestedOrientation() ==
+                 ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+
         CameraInfo info = CameraHolder.instance().getCameraInfo()[mCameraId];
 
+        mEffectsDisplayResult = false;
         mEffectsRecorder = new EffectsRecorder(this);
 
         // TODO: Confirm none of the foll need to go to initializeEffectsRecording()
         // and none of these change even when the preview is not refreshed.
+        mEffectsRecorder.setAppToLandscape(inLandscape);
         mEffectsRecorder.setCamera(mCameraDevice);
         mEffectsRecorder.setCameraFacing(info.facing);
         mEffectsRecorder.setProfile(mProfile);
@@ -1495,6 +1539,11 @@ public class VideoCamera extends ActivityBase
         mCurrentVideoValues.put(Video.Media.RESOLUTION,
                 Integer.toString(mProfile.videoFrameWidth) + "x" +
                 Integer.toString(mProfile.videoFrameHeight));
+        Location loc = mLocationManager.getCurrentLocation();
+        if (loc != null) {
+            mCurrentVideoValues.put(Video.Media.LATITUDE, loc.getLatitude());
+            mCurrentVideoValues.put(Video.Media.LONGITUDE, loc.getLongitude());
+        }
         Log.v(TAG, "New video filename: " + mVideoFilename);
     }
 
@@ -1658,6 +1707,7 @@ public class VideoCamera extends ActivityBase
 
 
 
+        mCurrentVideoUri = null;
         if (effectsActive()) {
             initializeEffectsRecording();
             if (mEffectsRecorder == null) {
@@ -2066,15 +2116,18 @@ public class VideoCamera extends ActivityBase
         }
 
         // Set picture size.
-        String pictureSize = mPreferences.getString(
-                CameraSettings.KEY_PICTURE_SIZE, null);
-        if (pictureSize == null) {
-            CameraSettings.initialCameraPictureSize(this, mParameters);
-        } else {
-            List<Size> supported = mParameters.getSupportedPictureSizes();
-            CameraSettings.setCameraPictureSize(
-                    pictureSize, supported, mParameters);
+        // The logic here is different from the logic in still-mode camera.
+        // There we determine the preview size based on the picture size, but
+        // here we determine the picture size based on the preview size.
+        List<Size> supported = mParameters.getSupportedPictureSizes();
+        Size optimalSize = Util.getOptimalVideoSnapshotPictureSize(supported,
+                (double) mDesiredPreviewWidth / mDesiredPreviewHeight);
+        Size original = mParameters.getPictureSize();
+        if (!original.equals(optimalSize)) {
+            mParameters.setPictureSize(optimalSize.width, optimalSize.height);
         }
+        Log.v(TAG, "Video snapshot size is " + optimalSize.width + "x" +
+                optimalSize.height);
 
         // Set JPEG quality.
         int jpegQuality = CameraProfile.getJpegEncodingQualityParameter(mCameraId,
@@ -2141,8 +2194,23 @@ public class VideoCamera extends ActivityBase
             mBgLearningMessageFrame.setVisibility(View.GONE);
             checkQualityAndStartPreview();
         } else if (effectMsg == EffectsRecorder.EFFECT_MSG_RECORDING_DONE) {
-            addVideoToMediaStore();
-            getThumbnail();
+            // TODO: This assumes the codepath from onStopVideoRecording.  It
+            // does not appear to cause problems for the other codepaths, but
+            // should be properly thought through.
+            if (mEffectsDisplayResult) {
+                addVideoToMediaStore();
+                if (mIsVideoCaptureIntent) {
+                    if (!mQuickCapture) {
+                        showAlert();
+                    }
+                } else {
+                    getThumbnail();
+                }
+            }
+            mEffectsDisplayResult = false;
+        } else if (effectMsg == EffectsRecorder.EFFECT_MSG_PREVIEW_RUNNING) {
+            // Enable the shutter button once the preview is complete.
+            mShutterButton.setEnabled(true);
         } else if (effectId == EffectsRecorder.EFFECT_BACKDROPPER) {
             switch (effectMsg) {
                 case EffectsRecorder.EFFECT_MSG_STARTED_LEARNING:
@@ -2196,10 +2264,11 @@ public class VideoCamera extends ActivityBase
                 restorePreferences();
             }
         };
-        MenuHelper.confirmAction(this,
+        mRotateDialog.showAlertDialog(
                 getString(R.string.confirm_restore_title),
                 getString(R.string.confirm_restore_message),
-                runnable);
+                getString(android.R.string.ok), runnable,
+                getString(android.R.string.cancel), null);
     }
 
     private void restorePreferences() {
@@ -2244,14 +2313,19 @@ public class VideoCamera extends ActivityBase
                 // Restart the activity to have a crossfade animation.
                 // TODO: Use SurfaceTexture to implement a better and faster
                 // animation.
+                Intent intent;
                 if (mIsVideoCaptureIntent) {
                     // If the intent is video capture, stay in video capture mode.
-                    Intent intent = getIntent();
-                    intent.putExtra(RESET_EFFECT_EXTRA, false);
-                    MenuHelper.gotoVideoMode(this, intent);
+                    intent = getIntent();
                 } else {
-                    MenuHelper.gotoVideoMode(this, false);
+                    intent = new Intent(MediaStore.INTENT_ACTION_VIDEO_CAMERA);
                 }
+                // To maintain the same background in background replacer, we
+                // need to send the background video uri via the Intent (apart
+                // from the condition that the effects should not be reset).
+                intent.putExtra(BACKGROUND_URI_GALLERY_EXTRA, mEffectUriFromGallery);
+                intent.putExtra(RESET_EFFECT_EXTRA, false);
+                MenuHelper.gotoVideoMode(this, intent);
                 finish();
             } else {
                 readVideoPreferences();
@@ -2466,6 +2540,12 @@ public class VideoCamera extends ActivityBase
     private void initializeVideoSnapshot() {
         if (mParameters.isVideoSnapshotSupported() && !mIsVideoCaptureIntent) {
             findViewById(R.id.camera_preview).setOnTouchListener(this);
+            // Show the tap to focus toast if this is the first start.
+            if (mPreferences.getBoolean(
+                        CameraSettings.KEY_VIDEO_FIRST_USE_HINT_SHOWN, true)) {
+                // Delay the toast for one second to wait for orientation.
+                mHandler.sendEmptyMessageDelayed(SHOW_TAP_TO_SNAPSHOT_TOAST, 1000);
+            }
         }
     }
 
@@ -2481,8 +2561,8 @@ public class VideoCamera extends ActivityBase
     @Override
     public boolean onTouch(View v, MotionEvent e) {
         if (mMediaRecorderRecording && effectsActive()) {
-            Toast.makeText(this, getResources().getString(
-                    R.string.disable_video_snapshot_hint), Toast.LENGTH_LONG).show();
+            new RotateTextToast(this, R.string.disable_video_snapshot_hint,
+                    mOrientation).show();
             return false;
         }
 
@@ -2578,5 +2658,14 @@ public class VideoCamera extends ActivityBase
             }
             mVideoFileDescriptor = null;
         }
+    }
+
+    private void showTapToSnapshotToast() {
+        new RotateTextToast(this, R.string.video_snapshot_hint, mOrientation)
+                .show();
+        // Clear the preference.
+        Editor editor = mPreferences.edit();
+        editor.putBoolean(CameraSettings.KEY_VIDEO_FIRST_USE_HINT_SHOWN, false);
+        editor.apply();
     }
 }

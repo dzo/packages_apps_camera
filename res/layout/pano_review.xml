@@ -17,47 +17,71 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:id="@+id/pano_review_layout"
         android:visibility="invisible"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:orientation="horizontal"
+        android:layout_height="match_parent"
+        android:layout_width="match_parent">
+
+    <RelativeLayout style="@style/PanoViewHorizontalBar">
+        <com.android.camera.ui.RotateLayout
+                android:id="@+id/pano_review_saving_indication_layout"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:layout_marginTop="20dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+            <TextView android:id="@+id/pano_review_saving_indication"
+                    android:text="@string/pano_review_saving_indication_str"
+                    android:textAppearance="?android:textAppearanceMedium"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content" />
+        </com.android.camera.ui.RotateLayout>
+
+        <com.android.camera.ui.RotateLayout
+                android:id="@+id/pano_saving_progress_bar_layout"
+                android:layout_centerInParent="true"
+                android:layout_height="wrap_content"
+                android:layout_width="wrap_content">
+            <com.android.camera.panorama.PanoProgressBar
+                    android:id="@+id/pano_saving_progress_bar"
+                    android:src="@drawable/ic_pan_progression"
+                    android:layout_centerInParent="true"
+                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content" />
+        </com.android.camera.ui.RotateLayout>
+    </RelativeLayout>
+
+    <com.android.camera.ui.RotateLayout
+            android:id="@+id/pano_rotate_reviewarea"
+            android:layout_width="@dimen/pano_mosaic_surface_height"
+            android:layout_height="match_parent">
+        <ImageView android:id="@+id/pano_reviewarea"
+                android:scaleType="fitCenter"
+                android:layout_height="match_parent"
+                android:layout_width="match_parent" />
+    </com.android.camera.ui.RotateLayout>
 
     <LinearLayout android:id="@+id/pano_review_control"
             style="@style/PanoViewHorizontalBar"
-            android:gravity="right"
-            android:orientation="horizontal"
+            android:gravity="bottom"
+            android:orientation="vertical"
             android:layout_alignParentBottom="true"
-            android:layout_width="match_parent">
+            android:layout_height="match_parent">
 
-        <TextView android:id="@+id/pano_review_cancel_button"
-                android:text="@string/review_cancel"
-                android:clickable="true"
-                android:onClick="onCancelButtonClicked"
-                android:textAppearance="?android:textAppearanceMedium"
-                android:minWidth="@dimen/pano_review_button_width"
-                android:layout_width="wrap_content"
-                android:layout_height="@dimen/pano_review_button_height" />
+        <com.android.camera.ui.RotateLayout
+                android:id="@+id/pano_review_cancel_button_layout"
+                android:layout_gravity="bottom|center_horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+            <TextView android:id="@+id/pano_review_cancel_button"
+                    android:text="@string/review_cancel"
+                    android:background="@drawable/bg_pressed"
+                    android:gravity="center"
+                    android:clickable="true"
+                    android:onClick="onCancelButtonClicked"
+                    android:textSize="12sp"
+                    android:minWidth="@dimen/pano_review_button_width"
+                    android:layout_height="match_parent"
+                    android:layout_width="wrap_content" />
+        </com.android.camera.ui.RotateLayout>
     </LinearLayout>
-
-    <ImageView android:id="@+id/pano_reviewarea"
-            android:scaleType="fitCenter"
-            android:layout_width="match_parent"
-            android:layout_height="@dimen/pano_mosaic_surface_height" />
-
-    <RelativeLayout style="@style/PanoViewHorizontalBar">
-        <TextView android:id="@+id/pano_review_saving_indication"
-                android:text="@string/pano_review_saving_indication_str"
-                android:textSize="@dimen/pano_review_saving_indication_size"
-                android:layout_alignParentLeft="true"
-                android:layout_centerVertical="true"
-                android:layout_marginLeft="20dp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-
-        <com.android.camera.panorama.PanoProgressBar
-                android:id="@+id/pano_saving_progress_bar"
-                android:src="@drawable/ic_pan_progression"
-                android:layout_centerInParent="true"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content" />
-    </RelativeLayout>
 </LinearLayout>
