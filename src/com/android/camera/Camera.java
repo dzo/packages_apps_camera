@@ -103,6 +103,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         LocationManager.Listener {
 
     private static final String TAG = "camera";
+    private static final String TAG_PROFILE = "qcamera PROFILE";
 
     private static final String[] OTHER_SETTING_KEYS = {
             CameraSettings.KEY_RECORD_LOCATION,
@@ -313,6 +314,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private long mRawPictureCallbackTime;
     private long mJpegPictureCallbackTime;
     private long mOnResumeTime;
+    private long mShutterupTime;
     private long mPicturesRemaining;
     private byte[] mJpegImageData;
 
@@ -857,6 +859,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mRawPictureCallbackTime = System.currentTimeMillis();
             Log.v(TAG, "mShutterToRawCallbackTime = "
                     + (mRawPictureCallbackTime - mShutterCallbackTime) + "ms");
+
+            if (mShutterupTime != 0)
+                Log.e(TAG,"<qcamera PROFILE> Snapshot to Thumb Latency = "
+                        + (mRawPictureCallbackTime - mShutterupTime) + " ms");
+
+
         }
     }
 
@@ -890,6 +898,10 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             }
             Log.v(TAG, "mPictureDisplayedToJpegCallbackTime = "
                     + mPictureDisplayedToJpegCallbackTime + "ms");
+
+            if (mShutterupTime != 0)
+                Log.e(TAG,"<qcamera PROFILE> Snapshot to Snapshot Latency = "
+                        + (mJpegPictureCallbackTime - mShutterupTime) + " ms");
 
             if (!mIsImageCaptureIntent) {
                     startPreview();
@@ -1203,6 +1215,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             return false;
         }
         mCaptureStartTime = System.currentTimeMillis();
+        qcameraUtilProfile("Snap start at");
         mPostViewPictureCallbackTime = 0;
         mJpegImageData = null;
 
@@ -1216,6 +1229,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
 
         Util.setGpsParameters(mParameters, loc);
+        qcameraUtilProfile("pre set parm");
         mCameraDevice.setParameters(mParameters);
 
         if(mHiston) {
@@ -1224,6 +1238,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             if(mGraphView != null)
                 mGraphView.setVisibility(View.INVISIBLE);
         }
+
+        qcameraUtilProfile("pre-snap");
 
         mCameraDevice.takePicture(mShutterCallback, mRawPictureCallback,
                 mPostViewPictureCallback, new JpegPictureCallback(loc));
@@ -1273,7 +1289,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     Thread mCameraOpenThread = new Thread(new Runnable() {
         public void run() {
             try {
+                qcameraUtilProfile("open camera");
                 mCameraDevice = Util.openCamera(Camera.this, mCameraId);
+                qcameraUtilProfile("camera opended");
             } catch (CameraHardwareException e) {
                 mOpenCameraFail = true;
             } catch (CameraDisabledException e) {
@@ -1292,6 +1310,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     @Override
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
+
+        qcameraUtilProfile("Create camera");
         getPreferredCameraId();
         String[] defaultFocusModes = getResources().getStringArray(
                 R.array.pref_camera_focusmode_default_array);
@@ -1322,6 +1342,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         mNumberOfCameras = CameraHolder.instance().getNumberOfCameras();
         mQuickCapture = getIntent().getBooleanExtra(EXTRA_QUICK_CAPTURE, false);
+
+        mShutterupTime = 0;
 
         // we need to reset exposure for the preview
         resetExposureCompensation();
@@ -1647,6 +1669,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         if (pressed && !canTakePicture()) return;
 
         if (pressed) {
+            qcameraUtilProfile("focus button");
             mFocusManager.onShutterDown();
         } else {
             mFocusManager.onShutterUp();
@@ -1681,6 +1704,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }else{
             mFocusManager.setZslEnable(false);
         }
+        mShutterupTime = System.currentTimeMillis();
         mFocusManager.doSnap();
     }
 
@@ -1879,8 +1903,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     @Override
     public void autoFocus() {
         mFocusStartTime = System.currentTimeMillis();
+        qcameraUtilProfile("Start autofocus");
         mCameraDevice.autoFocus(mAutoFocusCallback);
         setCameraState(FOCUSING);
+        qcameraUtilProfile("post autofocus");
+
     }
 
     @Override
@@ -2100,6 +2127,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private void startPreview() {
         if (mPausing || isFinishing()) return;
 
+        qcameraUtilProfile("start preview & set parms");
+
         mFocusManager.resetTouchFocus();
 
         mCameraDevice.setErrorCallback(mErrorCallback);
@@ -2138,6 +2167,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
 
         try {
+            qcameraUtilProfile("start preview");
+            Log.v(TAG, "startPreview");
             mCameraDevice.startPreview();
         } catch (Throwable ex) {
             closeCamera();
@@ -2757,6 +2788,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         updateOnScreenIndicators();
     }
 
+    private void qcameraUtilProfile( String msg) {
+        Log.e(TAG_PROFILE, " "+ msg +":" + System.currentTimeMillis()/1000.0);
+    }
     @Override
     public void onUserInteraction() {
         super.onUserInteraction();
