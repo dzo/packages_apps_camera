@@ -2038,7 +2038,12 @@ public class VideoCamera extends ActivityBase
 
 	videoWidth = mProfile.videoFrameWidth;
         videoHeight = mProfile.videoFrameHeight;
-
+        if( (((videoWidth == 1280) && (videoHeight == 720)) || ((videoWidth == 1920) && (videoHeight == 1088))))
+            mParameters.setPreviewSize(768, 432);
+        else
+            mParameters.setPreviewSize(videoWidth, videoHeight);
+        String recordSize = videoWidth + "x" + videoHeight;
+        mParameters.set("record-size", recordSize);
 
         mUnsupportedHFRVideoSize = false;
         mUnsupportedHFRVideoCodec = false;
