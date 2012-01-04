@@ -61,6 +61,7 @@ public class CameraSettings {
     public static final String KEY_HIGH_DYNAMIC_RANGE_IMAGING = "pref_camera_hdr_key";
     public static final String KEY_HISTOGRAM = "pref_camera_histogram_key";
     public static final String KEY_SKIN_TONE_ENHANCEMENT = "pref_camera_skinToneEnhancement_key";
+    public static final String KEY_SKIN_TONE_ENHANCEMENT_FACTOR = "pref_camera_skinToneEnhancement_factor_key";
     public static final String KEY_AUTOEXPOSURE = "pref_camera_autoexposure_key";
     public static final String KEY_ANTIBANDING = "pref_camera_antibanding_key";
     public static final String KEY_PICTURE_FORMAT = "pref_camera_pictureformat_key";
@@ -178,7 +179,6 @@ public class CameraSettings {
         ListPreference colorEffect = group.findPreference(KEY_COLOR_EFFECT);
         ListPreference touchAfAec = group.findPreference(KEY_TOUCH_AF_AEC);
         ListPreference sceneMode = group.findPreference(KEY_SCENE_MODE);
-        ListPreference sceneDetect = group.findPreference(KEY_SCENE_DETECT);
         ListPreference flashMode = group.findPreference(KEY_FLASH_MODE);
         ListPreference focusMode = group.findPreference(KEY_FOCUS_MODE);
         ListPreference exposure = group.findPreference(KEY_EXPOSURE);
@@ -200,7 +200,7 @@ public class CameraSettings {
         ListPreference hfr = group.findPreference(KEY_VIDEO_HIGH_FRAME_RATE);
         ListPreference redeyeReduction = group.findPreference(KEY_REDEYE_REDUCTION);
         ListPreference denoise = group.findPreference(KEY_DENOISE);
-		
+
         ListPreference videoEffect = group.findPreference(KEY_VIDEO_EFFECT);
         ListPreference zsl = group.findPreference(KEY_ZSL);
 
@@ -488,7 +488,7 @@ public class CameraSettings {
         editor.putInt(KEY_VERSION, CURRENT_VERSION);
         editor.apply();
     }
-	
+
 	 public static void upgradeAllPreferences(ComboPreferences pref) {
         upgradeGlobalPreferences(pref.getGlobal());
         upgradeLocalPreferences(pref.getLocal());
@@ -712,7 +712,7 @@ public class CameraSettings {
 
         filterUnsupportedOptions(group, videoEffect, supported);
     }
-	
+
 	public static int readPreferredCameraMode(SharedPreferences pref) {
         return Integer.parseInt(pref.getString(KEY_CAMERA_MODE, "1"));
     }

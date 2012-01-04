@@ -121,9 +121,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private static final String[] OTHER_SETTING_KEYS_1 = {
             CameraSettings.KEY_AUTOEXPOSURE,
             CameraSettings.KEY_ANTIBANDING,
-            CameraSettings.KEY_SCENE_DETECT,
             CameraSettings.KEY_TOUCH_AF_AEC,
-            CameraSettings.KEY_SKIN_TONE_ENHANCEMENT,
+            //CameraSettings.KEY_SKIN_TONE_ENHANCEMENT,
             CameraSettings.KEY_SELECTABLE_ZONE_AF,
             CameraSettings.KEY_SHARPNESS
         };
@@ -412,9 +411,26 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 }
 
                 case SET_SKIN_TONE_FACTOR: {
-                     setSkinToneFactor();
-                     mSeekBarInitialized = true;
-                     break;
+                    Log.e(TAG, "yyan set tone bar: mSceneMode = " + mSceneMode);
+                    setSkinToneFactor();
+                    mSeekBarInitialized = true;
+                    // skin tone ie enabled only for auto,party and portrait BSM
+                    // when color effects are not enabled
+                    String colorEffect = mPreferences.getString(
+                        CameraSettings.KEY_COLOR_EFFECT,
+                        getString(R.string.pref_camera_coloreffect_default));
+                    if((//Parameters.SCENE_MODE_AUTO.equals(mSceneMode) ||
+                        Parameters.SCENE_MODE_PARTY.equals(mSceneMode) ||
+                        //Parameters.SCENE_MODE_OFF.equals(mSceneMode) ||
+                        Parameters.SCENE_MODE_PORTRAIT.equals(mSceneMode))&&
+                        (Parameters.EFFECT_NONE.equals(colorEffect))) {
+                        ;
+                    }
+                    else{
+                        Log.e(TAG, "yyan Skin tone bar: disable");
+                        disableSkinToneSeekBar();
+                    }
+                    break;
                 }
             }
         }
@@ -815,7 +831,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     }
 
     private void updateOnScreenIndicators() {
-        boolean isAutoScene = !(Parameters.SCENE_MODE_AUTO.equals(mParameters.getSceneMode()));
+        boolean isAutoScene = !(Parameters.SCENE_MODE_OFF.equals(mParameters.getSceneMode()));
         updateSceneOnScreenIndicator(isAutoScene);
         updateExposureOnScreenIndicator(CameraSettings.readExposure(mPreferences));
         updateFlashOnScreenIndicator(mParameters.getFlashMode());
@@ -982,6 +998,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
 
         public void onStopTrackingTouch(SeekBar bar) {
+            Log.e(TAG, "yyan Set onStopTrackingTouch mskinToneValue = " + mskinToneValue);
+            Editor editor = mPreferences.edit();
+            editor.putString(CameraSettings.KEY_SKIN_TONE_ENHANCEMENT_FACTOR, 
+                             Integer.toString(mskinToneValue));
+            editor.apply();
         }
     };
 
@@ -1445,23 +1466,26 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     }
 
     private void overrideCameraSettings(final String flashMode,
-            final String whiteBalance, final String focusMode) {
+            final String whiteBalance, final String focusMode,
+            final String exposureMode) {
         if (mIndicatorControlContainer != null) {
             mIndicatorControlContainer.overrideSettings(
                     CameraSettings.KEY_FLASH_MODE, flashMode,
                     CameraSettings.KEY_WHITE_BALANCE, whiteBalance,
-                    CameraSettings.KEY_FOCUS_MODE, focusMode);
+                    CameraSettings.KEY_FOCUS_MODE, focusMode,
+                    CameraSettings.KEY_EXPOSURE, exposureMode);
         }
     }
 
     private void updateSceneModeUI() {
         // If scene mode is set, we cannot set flash mode, white balance, and
         // focus mode, instead, we read it from driver
-        if (!Parameters.SCENE_MODE_AUTO.equals(mSceneMode)) {
+        if (!Parameters.SCENE_MODE_OFF.equals(mSceneMode)) {
             overrideCameraSettings(mParameters.getFlashMode(),
-                    mParameters.getWhiteBalance(), mParameters.getFocusMode());
+                    mParameters.getWhiteBalance(), mParameters.getFocusMode(),
+                    Integer.toString(mParameters.getExposureCompensation()));
         } else {
-            overrideCameraSettings(null, null, null);
+            overrideCameraSettings(null, null, null, null);
         }
     }
 
@@ -1792,7 +1816,10 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
        //due to the finite latency of loading the seekBar layout when switching modes
        // for same Camera Device instance
         if (mSkinToneSeekBar != true)
+        {
+            Log.e(TAG, "yyan send tone bar: mSkinToneSeekBar = " + mSkinToneSeekBar);    
             mHandler.sendEmptyMessage(SET_SKIN_TONE_FACTOR);
+        }
 
         if (mSurfaceHolder != null) {
             // If first time initialization is not finished, put it in the
@@ -2335,7 +2362,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         } else {
             mSceneMode = mParameters.getSceneMode();
             if (mSceneMode == null) {
-                mSceneMode = Parameters.SCENE_MODE_AUTO;
+                mSceneMode = Parameters.SCENE_MODE_OFF;
             }
         }
 
@@ -2433,19 +2460,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
              mParameters.setAutoExposure(autoExposure);
          }
 
-         // Set auto scene detect.
-        String sceneDetect = mPreferences.getString(
-                CameraSettings.KEY_SCENE_DETECT,
-                getString(R.string.pref_camera_scenedetect_default));
-        if (isSupported(sceneDetect, mParameters.getSupportedSceneDetectModes())) {
-            mParameters.setSceneDetectMode(sceneDetect);
-        } else {
-            sceneDetect = mParameters.getSceneDetectMode();
-            if (sceneDetect == null) {
-                sceneDetect = Parameters.SCENE_DETECT_OFF;
-            }
-        }
-
         // Set Touch AF/AEC parameter.
         String touchAfAec = mPreferences.getString(
                  CameraSettings.KEY_TOUCH_AF_AEC,
@@ -2527,11 +2541,13 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         // skin tone ie enabled only for auto,party and portrait BSM
         // when color effects are not enabled
-        if((Parameters.SCENE_MODE_AUTO.equals(mSceneMode) ||
-            Parameters.SCENE_MODE_PARTY.equals(mSceneMode) |
+        if((//Parameters.SCENE_MODE_AUTO.equals(mSceneMode) ||
+            Parameters.SCENE_MODE_PARTY.equals(mSceneMode) ||
+            //Parameters.SCENE_MODE_OFF.equals(mSceneMode) ||
             Parameters.SCENE_MODE_PORTRAIT.equals(mSceneMode))&&
             (Parameters.EFFECT_NONE.equals(colorEffect))) {
             //Set Skin Tone Correction factor
+            Log.e(TAG, "yyan set tone bar: mSceneMode = " + mSceneMode);
             if(mSeekBarInitialized == true)
                 setSkinToneFactor();
         }
@@ -2563,7 +2579,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 getString(R.string.pref_camera_picture_format_default));
         mParameters.set(KEY_PICTURE_FORMAT, pictureFormat);
 
-        if (Parameters.SCENE_MODE_AUTO.equals(mSceneMode)) {
+        if (Parameters.SCENE_MODE_OFF.equals(mSceneMode)) {
             // Set flash mode.
             String flashMode = mPreferences.getString(
                     CameraSettings.KEY_FLASH_MODE,
@@ -2810,6 +2826,26 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
 
         updateOnScreenIndicators();
+
+        if (mSeekBarInitialized == true){
+            Log.e(TAG, "yyan onSharedPreferenceChanged Skin tone bar: change");
+                    // skin tone ie enabled only for auto,party and portrait BSM
+                    // when color effects are not enabled
+                    String colorEffect = mPreferences.getString(
+                        CameraSettings.KEY_COLOR_EFFECT,
+                        getString(R.string.pref_camera_coloreffect_default));
+                    if((//Parameters.SCENE_MODE_AUTO.equals(mSceneMode) ||
+                        Parameters.SCENE_MODE_PARTY.equals(mSceneMode) ||
+                        //Parameters.SCENE_MODE_OFF.equals(mSceneMode) ||
+                        Parameters.SCENE_MODE_PORTRAIT.equals(mSceneMode))&&
+                        (Parameters.EFFECT_NONE.equals(colorEffect))) {
+                        ;
+                    }
+                    else{
+                        disableSkinToneSeekBar();
+                    }
+        }
+
     }
 
     private void qcameraUtilProfile( String msg) {
@@ -2908,21 +2944,36 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private void setSkinToneFactor(){
        if (skinToneSeekBar == null) return;
-
+/*
        String skinToneEnhancementPref = mPreferences.getString(
                 CameraSettings.KEY_SKIN_TONE_ENHANCEMENT,
        getString(R.string.pref_camera_skinToneEnhancement_default));
+ */
+       String skinToneEnhancementPref = "enable";
        if(isSupported(skinToneEnhancementPref,
                mParameters.getSupportedSkinToneEnhancementModes())){
          if(skinToneEnhancementPref.equals("enable")) {
-               Log.e(TAG, "Skin tone bar: enable");
+             int skinToneValue =0;
+             int progress;
+               //yyan get the value for the first time!
+               if (mskinToneValue ==0){
+                  String factor = mPreferences.getString(CameraSettings.KEY_SKIN_TONE_ENHANCEMENT_FACTOR, "0");
+                  skinToneValue = Integer.parseInt(factor);
+               }
+
+               Log.e(TAG, "yyan Skin tone bar: enable = " + mskinToneValue);
                enableSkinToneSeekBar();
+               //yyan: as a wrokaround set progress again to show the actually progress on screen.
+               progress = (skinToneValue/SCE_FACTOR_STEP)-MIN_SCE_FACTOR;
+               skinToneSeekBar.setProgress(progress);
+               //mskinToneSeekListener.onProgressChanged(skinToneSeekBar,progress,true);
+               //skinToneSeekBar.onProgressRefresh(1.0f, true);
           } else {
-              Log.e(TAG, "Skin tone bar: disable");
+              Log.e(TAG, "yyan Skin tone bar: disable");
                disableSkinToneSeekBar();
           }
        } else {
-           Log.e(TAG, "Skin tone bar: Not supported");
+           Log.e(TAG, "yyan Skin tone bar: Not supported");
           skinToneSeekBar.setVisibility(View.INVISIBLE);
        }
     }
