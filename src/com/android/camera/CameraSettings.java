@@ -241,7 +241,7 @@ public class CameraSettings {
                         focusMode, mParameters.getSupportedFocusModes());
             } else {
                 // Remove the focus mode if we can use tap-to-focus.
-                removePreference(group, focusMode.getKey());
+                //removePreference(group, focusMode.getKey()); //punits
             }
         }
         if (videoFlashMode != null) {
