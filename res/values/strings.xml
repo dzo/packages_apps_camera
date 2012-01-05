@@ -727,4 +727,7 @@
 
      <!-- The message is shown in dialog when the app encounters an unsupported video codec for HFR mode -->
      <string name="error_app_unsupported_hfr_codec">Only H264 video encoding is supported when HFR is ON</string>
+
+     <!-- The message is shown in dialog when the app encounters an unsupported video resolution-->
+     <string name="error_app_unsupported">Unsupported video resolution for this encoder type</string>
 </resources>
