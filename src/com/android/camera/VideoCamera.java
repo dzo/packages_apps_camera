@@ -328,6 +328,8 @@ public class VideoCamera extends ActivityBase
             AUDIO_ENCODER_TABLE = new DefaultHashMap<String, Integer>();
     private static final DefaultHashMap<String, Integer>
             VIDEOQUALITY_BITRATE_TABLE = new DefaultHashMap<String, Integer>();
+    private static final DefaultHashMap<String, String>
+            HFR_SIZES = new DefaultHashMap<String, String>();
 
     static {
         OUTPUT_FORMAT_TABLE.put("3gp", MediaRecorder.OutputFormat.THREE_GPP);
@@ -348,6 +350,11 @@ public class VideoCamera extends ActivityBase
         AUDIO_ENCODER_TABLE.put("eaacplus",
                 MediaRecorder.AudioEncoder.EAAC_PLUS);
         AUDIO_ENCODER_TABLE.putDefault(MediaRecorder.AudioEncoder.DEFAULT);
+
+        HFR_SIZES.put("800x480", "WVGA");
+        HFR_SIZES.put("640x480", "VGA");
+        HFR_SIZES.put("432x240", "WQVGA");
+        HFR_SIZES.put("320x240", "QVGA");
     }
 
     private int mVideoEncoder;
@@ -1709,8 +1716,20 @@ public class VideoCamera extends ActivityBase
 
         if( mUnsupportedHFRVideoSize == true) {
             Log.v(TAG, "Unsupported HFR and video size combinations");
-            Toast.makeText(VideoCamera.this, R.string.error_app_unsupported_hfr,
-            Toast.LENGTH_SHORT).show();
+             mParameters = mCameraDevice.getParameters();
+            String errorMsg = "Only ";
+            List<Size> sizeList =  mParameters.getSupportedHfrSizes();
+            for(int i=1,n=sizeList.size(); i <= n; i++){
+               if(i != n){
+                   errorMsg = errorMsg +
+                       HFR_SIZES.get(sizeList.get(i-1).width+"x"+sizeList.get(i-1).height)+",";
+               } else {
+                   errorMsg = errorMsg + " and " +
+                       HFR_SIZES.get(sizeList.get(i-1).width+"x"+sizeList.get(i-1).height);
+               }
+            }
+            errorMsg = errorMsg + " are supported when HFR is on";
+            Toast.makeText(VideoCamera.this,errorMsg , Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -2072,24 +2091,35 @@ public class VideoCamera extends ActivityBase
                 CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
                 getString(R.string.pref_camera_hfr_default));
         if(!("off".equals(HighFrameRate))){
-            if ( !((videoWidth == 640 && videoHeight == 480) ||
-                   (videoWidth == 800 && videoHeight == 480))) {
-                mUnsupportedHFRVideoSize = true;
-            } else {
-                if (isSupported(HighFrameRate,
-                    mParameters.getSupportedVideoHighFrameRateModes())) {
-                    mParameters.setVideoHighFrameRate(HighFrameRate);
-                }
-            }
-            if(mVideoEncoder != MediaRecorder.VideoEncoder.H264){
-                mUnsupportedHFRVideoCodec = true;
-            }
-        } else {
-            if (isSupported(HighFrameRate,
+           mUnsupportedHFRVideoSize = true;
+           String hfrsize = videoWidth+"x"+videoHeight;
+           Log.v(TAG, "current set resolution is : "+hfrsize);
+           try {
+               for(Size size :  mParameters.getSupportedHfrSizes()){
+                  if(size != null) {
+                      Log.v(TAG, "supported hfr size : "+ size.width+ " "+size.height);
+                      if(videoWidth == size.width && videoHeight == size.height) {
+                          mUnsupportedHFRVideoSize = false;
+                          Log.v(TAG,"Current hfr resolution is supported");
+                          break;
+                      }
+                  }
+              }
+           } catch (NullPointerException e){
+               Log.e(TAG, "supported hfr sizes is null");
+           }
+
+           if(mUnsupportedHFRVideoSize)
+               Log.e(TAG,"Unsupported hfr resolution");
+           if(mVideoEncoder != MediaRecorder.VideoEncoder.H264){
+               mUnsupportedHFRVideoCodec = true;
+           }
+       }
+       if (isSupported(HighFrameRate,
                 mParameters.getSupportedVideoHighFrameRateModes())) {
-                mParameters.setVideoHighFrameRate(HighFrameRate);
-            }
-        }
+            mParameters.setVideoHighFrameRate(HighFrameRate);
+
+       }
 
         // Set flash mode.
         String flashMode = mPreferences.getString(
