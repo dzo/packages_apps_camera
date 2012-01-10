@@ -1808,10 +1808,19 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         Size size = mParameters.getPictureSize();
         // If Camera orientation and display Orientation is not aligned,
         // FrameLayout's Aspect Ration needs to be rotated
-        if(((info.orientation - degrees + 360)%180) == 90) {
-            mPreviewFrameLayout.setAspectRatio((double) size.height / size.width);
-        } else {
-            mPreviewFrameLayout.setAspectRatio((double) size.width / size.height);
+
+        if (this.getRequestedOrientation()
+                == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+            if(((info.orientation - degrees + 360)%180) == 0)
+                mPreviewFrameLayout.setAspectRatio((double) size.height / size.width);
+            else
+                mPreviewFrameLayout.setAspectRatio((double) size.width / size.height);
+        } else if (this.getRequestedOrientation()
+                == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
+            if(((info.orientation - degrees + 360)%180) == 90)
+                mPreviewFrameLayout.setAspectRatio((double) size.height / size.width);
+            else
+                mPreviewFrameLayout.setAspectRatio((double) size.width / size.height);
         }
     }
 
@@ -2139,7 +2148,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         // If we're previewing already, stop the preview first (this will blank
         // the screen).
-        if (mCameraState != PREVIEW_STOPPED) 
+        if (mCameraState != PREVIEW_STOPPED)
         {
             // However, in ZSL mode, we would not want to stop the
             // preview if app is trying to restartPreview after image capture.
@@ -2271,15 +2280,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         mPreviewPanel = findViewById(R.id.frame_layout);
         mPreviewFrameLayout = (PreviewFrameLayout) findViewById(R.id.frame);
-        CameraInfo info = CameraHolder.instance().getCameraInfo()[mCameraId];
-        int degrees = Util.getDisplayRotation(this);
-        // If Camera orientation and display Orientation is not aligned,
-        // FrameLayout's Aspect Ration needs to be rotated
-        if(((info.orientation - degrees + 360)%180) == 90) {
-            mPreviewFrameLayout.setAspectRatio((double) size.height / size.width);
-        } else {
-            mPreviewFrameLayout.setAspectRatio((double) size.width / size.height);
-        }
+        resizeForPreviewAspectRatio();
 
         // Set a preview size that is closest to the viewfinder height and has
         // the right aspect ratio.

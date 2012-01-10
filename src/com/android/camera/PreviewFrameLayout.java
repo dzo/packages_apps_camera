@@ -24,7 +24,6 @@ import android.content.pm.ActivityInfo;
 import android.view.View;
 import android.util.AttributeSet;
 import android.widget.RelativeLayout;
-import android.os.SystemProperties;
 /**
  * A layout which handles the preview aspect ratio.
  */
@@ -46,10 +45,7 @@ public class PreviewFrameLayout extends RelativeLayout {
 
         if (((Activity) getContext()).getRequestedOrientation()
                 == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
-            String landscape = SystemProperties.get("debug.camera.landscape");
-            if(!landscape.equals("true")) {
-               ratio = 1 / ratio;
-            }
+            ratio = 1 / ratio;
         }
 
         if (mAspectRatio != ratio) {

@@ -946,12 +946,22 @@ public class VideoCamera extends ActivityBase
         int degrees = Util.getDisplayRotation(this);
         // If Camera orientation and display Orientation is not aligned,
         // FrameLayout's Aspect Ration needs to be rotated
-        if(((info.orientation - degrees + 360)%180) == 90) {
-            mPreviewFrameLayout.setAspectRatio(
-                (double) mProfile.videoFrameHeight / mProfile.videoFrameWidth);
-        } else {
-            mPreviewFrameLayout.setAspectRatio(
-                (double) mProfile.videoFrameWidth / mProfile.videoFrameHeight);
+        if (this.getRequestedOrientation()
+                == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT) {
+            if(((info.orientation - degrees + 360)%180) == 0)
+                mPreviewFrameLayout.setAspectRatio(
+                    (double) mProfile.videoFrameHeight / mProfile.videoFrameWidth);
+            else
+                mPreviewFrameLayout.setAspectRatio(
+                    (double) mProfile.videoFrameWidth / mProfile.videoFrameHeight);
+        } else if (this.getRequestedOrientation()
+                == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) {
+            if(((info.orientation - degrees + 360)%180) == 90)
+                mPreviewFrameLayout.setAspectRatio(
+                    (double) mProfile.videoFrameHeight / mProfile.videoFrameWidth);
+            else
+                mPreviewFrameLayout.setAspectRatio(
+                    (double) mProfile.videoFrameWidth / mProfile.videoFrameHeight);
         }
     }
 
