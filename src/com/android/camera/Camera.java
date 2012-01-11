@@ -92,6 +92,10 @@ import java.util.HashMap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+
+import android.graphics.ImageFormat;
+import android.os.SystemProperties;
+
 import android.graphics.Paint.Align;
 
 
@@ -2292,6 +2296,14 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mParameters = mCameraDevice.getParameters();
         }
         Log.v(TAG, "Preview size is " + optimalSize.width + "x" + optimalSize.height);
+
+       // To set preview format as YV12 , run command
+       // "adb shell setprop "debug.camera.yv12" true"
+       String yv12formatset = SystemProperties.get("debug.camera.yv12");
+       if(yv12formatset.equals("true")) {
+          Log.e(TAG, "preview format set to YV12");
+         mParameters.setPreviewFormat (ImageFormat.YV12);
+       }
 
         // Since change scene mode may change supported values,
         // Set scene mode first,
