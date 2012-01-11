@@ -179,6 +179,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private int mZoomValue;  // The current zoom value.
     private int mZoomMax;
     private int mTargetZoomValue;
+    private int mBurstSnapNum;
+    private int mReceivedSnapNum;
     private ZoomControl mZoomControl;
 
     private Parameters mParameters;
@@ -884,6 +886,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             if (mPausing) {
                 return;
             }
+            mReceivedSnapNum = mReceivedSnapNum + 1;
 
             mJpegPictureCallbackTime = System.currentTimeMillis();
             // If postview callback has arrived, the captured image is displayed
@@ -907,9 +910,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 Log.e(TAG,"<qcamera PROFILE> Snapshot to Snapshot Latency = "
                         + (mJpegPictureCallbackTime - mShutterupTime) + " ms");
 
-            if (!mIsImageCaptureIntent) {
+            if (!mIsImageCaptureIntent && mSnapshotMode != CameraInfo.CAMERA_SUPPORT_MODE_ZSL
+                && mReceivedSnapNum == mBurstSnapNum) {
                     startPreview();
                     startFaceDetection();
+            } else if(mReceivedSnapNum == mBurstSnapNum){
+                setCameraState(IDLE);
             }
 
             if (!mIsImageCaptureIntent) {
@@ -934,7 +940,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mJpegCallbackFinishTime = now - mJpegPictureCallbackTime;
             Log.e(TAG, "mJpegCallbackFinishTime = "
                     + mJpegCallbackFinishTime + "ms");
-            mJpegPictureCallbackTime = 0;
+            if (mReceivedSnapNum == mBurstSnapNum) {
+                mJpegPictureCallbackTime = 0;
+            }
         }
     }
 
@@ -1245,6 +1253,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         qcameraUtilProfile("pre-snap");
 
+        mReceivedSnapNum = 0;
         mCameraDevice.takePicture(mShutterCallback, mRawPictureCallback,
                 mPostViewPictureCallback, new JpegPictureCallback(loc));
         if (mSnapshotMode == CameraInfo.CAMERA_SUPPORT_MODE_ZSL) {
@@ -1252,6 +1261,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
         mFaceDetectionStarted = false;
         setCameraState(SNAPSHOT_IN_PROGRESS);
+        mParameters = mCameraDevice.getParameters();
+        mBurstSnapNum = mParameters.getInt("num-snaps-per-shutter");
         return true;
     }
 
