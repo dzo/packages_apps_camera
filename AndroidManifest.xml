@@ -61,6 +61,10 @@
                 <action android:name="android.media.action.VIDEO_CAPTURE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+             <intent-filter>
+                <action android:name="android.media.action.VIDEO_CAMERA" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
 <!--
         <activity android:name="com.android.camera.panorama.PanoramaActivity"
