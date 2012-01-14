@@ -2188,13 +2188,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         // the screen).
         if (mCameraState != PREVIEW_STOPPED)
         {
-            // However, in ZSL mode, we would not want to stop the
-            // preview if app is trying to restartPreview after image capture.
-            // We'll have to stop preview only if there are some parameters
-            // change
-            if ((mSnapshotMode != CameraInfo.CAMERA_SUPPORT_MODE_ZSL) || zslrestartPreview ){
-                stopPreview();
-            }
+            //Always stop preview regardless of ZSL mode. ZSL mode case is handled in onPictureTaken()
+            //~punits
+            stopPreview();
         }
 
         setPreviewDisplay(mSurfaceHolder);
