@@ -2583,6 +2583,13 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 getString(R.string.pref_camera_picture_format_default));
         mParameters.set(KEY_PICTURE_FORMAT, pictureFormat);
 
+        /* Set wavelet denoise mode */
+        if (mParameters.getSupportedDenoiseModes() != null) {
+            String Denoise = mPreferences.getString( CameraSettings.KEY_DENOISE,
+                             getString(R.string.pref_camera_denoise_default));
+            mParameters.setDenoise(Denoise);
+        }
+
         if (Parameters.SCENE_MODE_OFF.equals(mSceneMode)) {
             // Set flash mode.
             String flashMode = mPreferences.getString(
@@ -2611,12 +2618,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 if (whiteBalance == null) {
                     whiteBalance = Parameters.WHITE_BALANCE_AUTO;
                 }
-            }
-            // Set Wavelet denoise mode
-            if (mParameters.getSupportedDenoiseModes() != null) {
-                String Denoise = mPreferences.getString( CameraSettings.KEY_DENOISE,
-                                 getString(R.string.pref_camera_denoise_default));
-                                 mParameters.setDenoise(Denoise);
             }
             // Set focus mode.
             mFocusManager.overrideFocusMode(null);
