@@ -81,6 +81,9 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import android.graphics.ImageFormat;
+import android.os.SystemProperties;
+
 import android.filterpacks.videosink.MediaRecorderStopException;
 
 import java.util.HashMap;
@@ -2213,6 +2216,14 @@ public class VideoCamera extends ActivityBase
 
         mUnsupportedHFRVideoSize = false;
         mUnsupportedHFRVideoCodec = false;
+      // To set preview format as YV12 , run command
+      // "adb shell setprop "debug.camera.yv12" true"
+       String yv12formatset = SystemProperties.get("debug.camera.yv12");
+       if(yv12formatset.equals("true")) {
+        Log.v(TAG, "preview format set to YV12");
+        mParameters.setPreviewFormat (ImageFormat.YV12);
+       }
+
         // Set High Frame Rate.
         String HighFrameRate = mPreferences.getString(
                 CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
