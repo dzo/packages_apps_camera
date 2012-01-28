@@ -2673,6 +2673,10 @@ public class VideoCamera extends ActivityBase
             return false;
         }
 
+        if(e.getAction() != e.ACTION_UP) {
+            Log.v(TAG, "Livesnapshot: MotionEvent e" +e);
+            return true;
+        }
         if (mPausing || mSnapshotInProgress
                 || !mMediaRecorderRecording || effectsActive()) {
             return false;
@@ -2701,9 +2705,10 @@ public class VideoCamera extends ActivityBase
         @Override
         public void onPictureTaken(byte [] jpegData, android.hardware.Camera camera) {
             Log.v(TAG, "onPictureTaken");
-            mSnapshotInProgress = false;
+            //mSnapshotInProgress = false;
             showVideoSnapshotUI(false);
             storeImage(jpegData, mLocation);
+            mSnapshotInProgress = false;
         }
     }
 
