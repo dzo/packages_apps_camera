@@ -2292,7 +2292,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
 
         Size old_size = mParameters.getPictureSize();
-        Log.v(TAG, "Old picture size : "+ old_size.width + " " + old_size.height);
 
         // Set picture size.
         String pictureSize = mPreferences.getString(
@@ -2323,15 +2322,19 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         Size optimalSize = Util.getOptimalPreviewSize(this,
                 sizes, (double) size.width / size.height);
         Size original = mParameters.getPreviewSize();
-        if (!original.equals(optimalSize)) {
-            mParameters.setPreviewSize(optimalSize.width, optimalSize.height);
+        try {
+            if (!original.equals(optimalSize)) {
+                mParameters.setPreviewSize(optimalSize.width, optimalSize.height);
 
-            // Zoom related settings will be changed for different preview
-            // sizes, so set and read the parameters to get lastest values
-            mCameraDevice.setParameters(mParameters);
-            mParameters = mCameraDevice.getParameters();
+                // Zoom related settings will be changed for different preview
+                // sizes, so set and read the parameters to get lastest values
+                mCameraDevice.setParameters(mParameters);
+                mParameters = mCameraDevice.getParameters();
+            }
+            Log.v(TAG, "Preview size is " + optimalSize.width + "x" + optimalSize.height);
+        } catch (Exception e){
+            Log.e(TAG, "Handled NULL pointer Exception for optimal size");
         }
-        Log.v(TAG, "Preview size is " + optimalSize.width + "x" + optimalSize.height);
 
        // To set preview format as YV12 , run command
        // "adb shell setprop "debug.camera.yv12" true"
@@ -2465,10 +2468,14 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
              mParameters.setTouchAfAec(touchAfAec);
          }
 
-         if(mParameters.getTouchAfAec().equals(mParameters.TOUCH_AF_AEC_ON))
-             this.mTouchAfAecFlag = true;
-         else
-             this.mTouchAfAecFlag = false;
+         try {
+             if(mParameters.getTouchAfAec().equals(mParameters.TOUCH_AF_AEC_ON))
+                 this.mTouchAfAecFlag = true;
+             else
+                 this.mTouchAfAecFlag = false;
+         } catch(Exception e){
+             Log.e(TAG, "Handled NULL pointer Exception");
+         }
 
          // Set Selectable Zone Af parameter.
          String selectableZoneAf = mPreferences.getString(
