@@ -41,6 +41,7 @@ public class CameraSettings {
     public static final String KEY_VIDEO_QUALITY = "pref_video_quality_key";
     public static final String KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL = "pref_video_time_lapse_frame_interval_key";
     public static final String KEY_PICTURE_SIZE = "pref_camera_picturesize_key";
+    public static final String KEY_VIDEO_SNAPSHOT_SIZE = "pref_camera_videosnapsize_key";
     public static final String KEY_JPEG_QUALITY = "pref_camera_jpegquality_key";
     public static final String KEY_FOCUS_MODE = "pref_camera_focusmode_key";
     public static final String KEY_FLASH_MODE = "pref_camera_flashmode_key";
@@ -203,6 +204,7 @@ public class CameraSettings {
         ListPreference hdr = group.findPreference(KEY_AE_BRACKET_HDR);
         ListPreference videoEffect = group.findPreference(KEY_VIDEO_EFFECT);
         ListPreference zsl = group.findPreference(KEY_ZSL);
+        ListPreference videoSnapSize = group.findPreference(KEY_VIDEO_SNAPSHOT_SIZE);
 
         // Since the screen could be loaded from different resources, we need
         // to check if the preference is available here
@@ -322,6 +324,15 @@ public class CameraSettings {
         if (hfr != null) {
             filterUnsupportedOptions(group,
                     hfr, mParameters.getSupportedVideoHighFrameRateModes());
+        }
+
+        if (!mParameters.isFullsizeVideoSnapSupported())
+        {
+             filterUnsupportedOptions(group,
+                    videoSnapSize, null);
+        }else{
+            filterUnsupportedOptions(group, videoSnapSize, sizeListToStringList(
+                    mParameters.getSupportedPictureSizes()));
         }
     }
 

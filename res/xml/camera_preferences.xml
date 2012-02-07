@@ -186,4 +186,9 @@
                 camera:title="@string/pref_camera_ae_bracket_hdr_title"
                 camera:entries="@array/pref_camera_hdr_entries"
                 camera:entryValues="@array/pref_camera_hdr_entryvalues" />
+          <ListPreference
+                camera:key="pref_camera_videosnapsize_key"
+                camera:title="@string/pref_camera_picturesize_title"
+                camera:entries="@array/pref_camera_picturesize_entries"
+                camera:entryValues="@array/pref_camera_picturesize_entryvalues" />
 </PreferenceGroup>

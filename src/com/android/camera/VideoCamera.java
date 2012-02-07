@@ -99,6 +99,7 @@ public class VideoCamera extends ActivityBase
 
     private static final String[] OTHER_SETTING_KEYS = {
                     CameraSettings.KEY_RECORD_LOCATION,
+                    CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE,
                     CameraSettings.KEY_VIDEO_ENCODER,
                     CameraSettings.KEY_AUDIO_ENCODER,
                     CameraSettings.KEY_VIDEO_DURATION,
@@ -284,6 +285,8 @@ public class VideoCamera extends ActivityBase
     private int mTargetZoomValue;
     private ZoomControl mZoomControl;
     private final ZoomListener mZoomListener = new ZoomListener();
+
+    private boolean mVideoSnapSizeChanged = false;
 
     //
     // DefaultHashMap is a HashMap which returns a default value if the specified
@@ -906,6 +909,28 @@ public class VideoCamera extends ActivityBase
         if (mCaptureTimeLapse) quality += 1000;
         mProfile = CamcorderProfile.get(mCameraId, quality);
         getDesiredPreviewSize();
+
+        //Video Snapshot Picture size
+        if(mParameters.isFullsizeVideoSnapSupported()) {
+            Size old_size = mParameters.getPictureSize();
+            String videoSnapSize = mPreferences.getString(
+                    CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE, null);
+            if (videoSnapSize == null) {
+                CameraSettings.initialCameraPictureSize(this, mParameters);
+            } else {
+                List<Size> supported = mParameters.getSupportedPictureSizes();
+                CameraSettings.setCameraPictureSize(
+                        videoSnapSize, supported, mParameters);
+            }
+
+            // Set the preview frame aspect ratio according to the picture size.
+            Size size = mParameters.getPictureSize();
+            Log.v(TAG, "New Video picture size : "+ size.width + " " + size.height);
+            if(!size.equals(old_size)){
+                Log.v(TAG, "new Video size id different from old picture size , restart..");
+                mVideoSnapSizeChanged = true;
+            }
+        }
     }
 
     private void writeDefaultEffectToPrefs()  {
@@ -2216,7 +2241,6 @@ public class VideoCamera extends ActivityBase
         if (isSupported(colorEffect, mParameters.getSupportedColorEffects())) {
             mParameters.setColorEffect(colorEffect);
         }
-
         mCameraDevice.setParameters(mParameters);
         // Keep preview size up to date.
         mParameters = mCameraDevice.getParameters();
@@ -2414,9 +2438,19 @@ public class VideoCamera extends ActivityBase
                     }
                     resizeForPreviewAspectRatio();
                     startPreview(); // Parameters will be set in startPreview().
-                } else {
+                }else if(mVideoSnapSizeChanged){
+                    //Restart Preview for Full size Live shot picture dimension change
+                    if (!effectsActive()) {
+                        mCameraDevice.stopPreview();
+                    } else {
+                        mEffectsRecorder.release();
+                    }
+                    startPreview();
+                }else {
                     setCameraParameters();
                 }
+
+
             }
         }
     }
