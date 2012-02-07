@@ -377,7 +377,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private final StatsCallback mStatsCallback = new StatsCallback();
     private final ZoomListener mZoomListener = new ZoomListener();
     private final CameraErrorCb mErrorCallback = new CameraErrorCb();
-
     private long mFocusStartTime;
     private long mCaptureStartTime;
     private long mShutterCallbackTime;
@@ -388,6 +387,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private long mShutterupTime;
     private long mPicturesRemaining;
     private byte[] mJpegImageData;
+
 
     // These latency time are for the CameraLatency test.
     public long mAutoFocusTime;
@@ -2261,7 +2261,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private void stopPreview() {
         if (mCameraDevice != null && mCameraState != PREVIEW_STOPPED) {
-            Log.v(TAG, "stopPreview");
             mCameraDevice.cancelAutoFocus(); // Reset the focus.
             mCameraDevice.stopPreview();
 //            mFaceDetectionStarted = false;
@@ -2349,9 +2348,10 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 size = mParameters.getPictureSize();
                 Log.e(TAG, "Reset new picture size : "+ old_size.width + " " + old_size.height);
             }
-            Log.v(TAG, "New picture size : "+ size.width + " " + size.height);
-            if(!size.equals(old_size)){
-                Log.v(TAG, "new picture size id different from old picture size , restart..");
+            Log.e(TAG, "New picture size : "+ size.width + " " + size.height);
+            if(!size.equals(old_size)&& mCameraState != PREVIEW_STOPPED) {
+                Log.v(TAG, "new picture size id different from old picture size , stop preview. Start preview will be called at a later point");
+                stopPreview();
                 mAspectRatioChanged = true;
             }
 
@@ -2532,6 +2532,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
         //Set Brightness.
         mParameters.set("luma-adaptation", String.valueOf(mbrightness));
+
 
          // Set auto exposure parameter.
          String autoExposure = mPreferences.getString(
@@ -2759,7 +2760,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             }
         }
         if(mAspectRatioChanged) {
-            Log.v(TAG, "Picture Aspect Ratio changed, restarting preview");
+            Log.e(TAG, "Picture Aspect Ratio changed, Starting preview");
             startPreview();
             mAspectRatioChanged = false;
         }
