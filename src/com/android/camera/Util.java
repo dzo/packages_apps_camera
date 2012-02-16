@@ -389,6 +389,7 @@ public class Util {
 
         Display display = currentActivity.getWindowManager().getDefaultDisplay();
         int targetHeight = Math.min(display.getHeight(), display.getWidth());
+        targetHeight = 1088; 
 
         if (targetHeight <= 0) {
             // We don't know the size of SurfaceView, use screen height
