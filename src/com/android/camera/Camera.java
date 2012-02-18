@@ -2297,33 +2297,35 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         // Set picture size.
         String pictureSize = mPreferences.getString(
                 CameraSettings.KEY_PICTURE_SIZE, null);
-        if (pictureSize == null) {
-            CameraSettings.initialCameraPictureSize(this, mParameters);
-        } else {
-            List<Size> supported = mParameters.getSupportedPictureSizes();
-            CameraSettings.setCameraPictureSize(
-                    pictureSize, supported, mParameters);
-        }
 
-        // Set the preview frame aspect ratio according to the picture size.
-        Size size = mParameters.getPictureSize();
-        Log.v(TAG, "New picture size : "+ size.width + " " + size.height);
-        if(!size.equals(old_size)){
-            Log.v(TAG, "new picture size id different from old picture size , restart..");
-            mAspectRatioChanged = true;
-        }
-
-        mPreviewPanel = findViewById(R.id.frame_layout);
-        mPreviewFrameLayout = (PreviewFrameLayout) findViewById(R.id.frame);
-        resizeForPreviewAspectRatio();
-
-        // Set a preview size that is closest to the viewfinder height and has
-        // the right aspect ratio.
-        List<Size> sizes = mParameters.getSupportedPreviewSizes();
-        Size optimalSize = Util.getOptimalPreviewSize(this,
-                sizes, (double) size.width / size.height);
-        Size original = mParameters.getPreviewSize();
         try {
+            if (pictureSize == null) {
+                CameraSettings.initialCameraPictureSize(this, mParameters);
+            } else {
+                List<Size> supported = mParameters.getSupportedPictureSizes();
+                CameraSettings.setCameraPictureSize(
+                        pictureSize, supported, mParameters);
+            }
+
+            // Set the preview frame aspect ratio according to the picture size.
+            Size size = mParameters.getPictureSize();
+            Log.v(TAG, "New picture size : "+ size.width + " " + size.height);
+            if(!size.equals(old_size)){
+                Log.v(TAG, "new picture size id different from old picture size , restart..");
+                mAspectRatioChanged = true;
+            }
+
+            mPreviewPanel = findViewById(R.id.frame_layout);
+            mPreviewFrameLayout = (PreviewFrameLayout) findViewById(R.id.frame);
+            resizeForPreviewAspectRatio();
+
+            // Set a preview size that is closest to the viewfinder height and has
+            // the right aspect ratio.
+            List<Size> sizes = mParameters.getSupportedPreviewSizes();
+            Size optimalSize = Util.getOptimalPreviewSize(this,
+                    sizes, (double) size.width / size.height);
+            Size original = mParameters.getPreviewSize();
+
             if (!original.equals(optimalSize)) {
                 mParameters.setPreviewSize(optimalSize.width, optimalSize.height);
 
@@ -2333,8 +2335,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 mParameters = mCameraDevice.getParameters();
             }
             Log.v(TAG, "Preview size is " + optimalSize.width + "x" + optimalSize.height);
-        } catch (Exception e){
-            Log.e(TAG, "Handled NULL pointer Exception for optimal size");
+        } catch (Exception e) {
+            Log.e(TAG, "Handled NULL pointer Exception");
         }
 
        // To set preview format as YV12 , run command
