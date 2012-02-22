@@ -935,7 +935,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
             if (!mIsImageCaptureIntent) {
                 Size s = mParameters.getPictureSize();
-                mImageSaver.addImage(jpegData, mLocation, s.width, s.height);
+                if (s==null) {
+                    Log.e(TAG,"error: getPictureSize = null !");
+                }
+                else{
+                    mImageSaver.addImage(jpegData, mLocation, s.width, s.height);
+                }
             } else {
                 mJpegImageData = jpegData;
                 if (!mQuickCapture) {
@@ -2291,6 +2296,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         }
 
         Size old_size = mParameters.getPictureSize();
+        if (old_size == null) {
+             mParameters.setPictureSize(640, 480);
+             old_size = mParameters.getPictureSize();
+             Log.e(TAG, "Reset old picture size : "+ old_size.width + " " + old_size.height);
+        }
+        Log.v(TAG, "Old picture size : "+ old_size.width + " " + old_size.height);
 
         // Set picture size.
         String pictureSize = mPreferences.getString(
@@ -2301,12 +2312,20 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 CameraSettings.initialCameraPictureSize(this, mParameters);
             } else {
                 List<Size> supported = mParameters.getSupportedPictureSizes();
-                CameraSettings.setCameraPictureSize(
+                if (null != supported) {
+                    CameraSettings.setCameraPictureSize(
                         pictureSize, supported, mParameters);
+                } else
+                     Log.e(TAG, "Error - getSupportedPictureSizes is null" );
             }
 
             // Set the preview frame aspect ratio according to the picture size.
             Size size = mParameters.getPictureSize();
+            if (size == null) {
+                mParameters.setPictureSize(640, 480);
+                size = mParameters.getPictureSize();
+                Log.e(TAG, "Reset new picture size : "+ old_size.width + " " + old_size.height);
+            }
             Log.v(TAG, "New picture size : "+ size.width + " " + size.height);
             if(!size.equals(old_size)){
                 Log.v(TAG, "new picture size id different from old picture size , restart..");
@@ -2324,7 +2343,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                     sizes, (double) size.width / size.height);
             Size original = mParameters.getPreviewSize();
 
-            if (!original.equals(optimalSize)) {
+            if (original == null || optimalSize == null)
+                mParameters.setPreviewSize(640, 480);
+            else if (!original.equals(optimalSize)) {
                 mParameters.setPreviewSize(optimalSize.width, optimalSize.height);
 
                 // Zoom related settings will be changed for different preview
@@ -2332,10 +2353,11 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 mCameraDevice.setParameters(mParameters);
                 mParameters = mCameraDevice.getParameters();
             }
-            Log.v(TAG, "Preview size is " + optimalSize.width + "x" + optimalSize.height);
         } catch (Exception e) {
             Log.e(TAG, "Handled NULL pointer Exception");
         }
+        Size z = mParameters.getPreviewSize();
+        Log.v(TAG, "Preview size is " + z.width + "x" + z.height);
 
        // To set preview format as YV12 , run command
        // "adb shell setprop "debug.camera.yv12" true"
@@ -2417,10 +2439,15 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         //mUnsupportedJpegQuality = false;
         Size pic_size = mParameters.getPictureSize();
-        if("100".equals(jpegQuality) && (pic_size.width >= 3200)){
-            //mUnsupportedJpegQuality = true;
-        }else {
-            mParameters.setJpegQuality(JpegEncodingQualityMappings.getQualityNumber(jpegQuality));
+        if (pic_size == null) {
+            Log.e(TAG, "error getPictureSize: size is null");
+        }
+        else{
+            if("100".equals(jpegQuality) && (pic_size.width >= 3200)){
+                //mUnsupportedJpegQuality = true;
+            }else {
+                mParameters.setJpegQuality(JpegEncodingQualityMappings.getQualityNumber(jpegQuality));
+            }
         }
 
         // Set ISO parameter.
