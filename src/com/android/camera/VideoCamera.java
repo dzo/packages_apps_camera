@@ -2241,6 +2241,20 @@ public class VideoCamera extends ActivityBase
         if (isSupported(colorEffect, mParameters.getSupportedColorEffects())) {
             mParameters.setColorEffect(colorEffect);
         }
+
+        //Video Snapshot Picture size
+        if(mParameters.isFullsizeVideoSnapSupported()) {
+            String videoSnapSize = mPreferences.getString(
+                    CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE, null);
+            if (videoSnapSize == null) {
+                CameraSettings.initialCameraPictureSize(this, mParameters);
+            } else {
+                supported = mParameters.getSupportedPictureSizes();
+                CameraSettings.setCameraPictureSize(
+                        videoSnapSize, supported, mParameters);
+            }
+        }
+
         mCameraDevice.setParameters(mParameters);
         // Keep preview size up to date.
         mParameters = mCameraDevice.getParameters();
@@ -2446,6 +2460,7 @@ public class VideoCamera extends ActivityBase
                         mEffectsRecorder.release();
                     }
                     startPreview();
+                    mVideoSnapSizeChanged = false;
                 }else {
                     setCameraParameters();
                 }
