@@ -2325,7 +2325,18 @@ public class VideoCamera extends ActivityBase
             mParameters.setColorEffect(colorEffect);
         }
 
-        configVideoSnapshotSize();
+        //Video Snapshot Picture size
+        if(mParameters.isFullsizeVideoSnapSupported()) {
+            String videoSnapSize = mPreferences.getString(
+                    CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE, null);
+            if (videoSnapSize == null) {
+                CameraSettings.initialCameraPictureSize(this, mParameters);
+            } else {
+                supported = mParameters.getSupportedPictureSizes();
+                CameraSettings.setCameraPictureSize(
+                        videoSnapSize, supported, mParameters);
+            }
+        }
 
         mCameraDevice.setParameters(mParameters);
         // Keep preview size up to date.
