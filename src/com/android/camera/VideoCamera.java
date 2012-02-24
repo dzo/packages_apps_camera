@@ -104,7 +104,7 @@ public class VideoCamera extends ActivityBase
                     CameraSettings.KEY_AUDIO_ENCODER,
                     CameraSettings.KEY_VIDEO_DURATION,
                     CameraSettings.KEY_COLOR_EFFECT,
-		    CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE
+                    CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE
         };
     public HashMap otherSettingKeys = new HashMap(2);
 
@@ -113,6 +113,7 @@ public class VideoCamera extends ActivityBase
     private static final int UPDATE_RECORD_TIME = 5;
     private static final int ENABLE_SHUTTER_BUTTON = 6;
     private static final int SHOW_TAP_TO_SNAPSHOT_TOAST = 7;
+    private static final int SHOW_VIDEOSNAP_CAPPING_MSG = 8;
 
     private static final int SCREEN_DELAY = 2 * 60 * 1000;
 
@@ -406,6 +407,10 @@ public class VideoCamera extends ActivityBase
                     showTapToSnapshotToast();
                     break;
                 }
+
+                case SHOW_VIDEOSNAP_CAPPING_MSG:
+                    showUserMsg(msg.what);
+                    break;
 
                 default:
                     Log.v(TAG, "Unhandled message: " + msg.what);
@@ -808,6 +813,34 @@ public class VideoCamera extends ActivityBase
         }
     }
 
+    private void configVideoSnapshotSize() {
+      //Video Snapshot Picture size
+        if(mParameters.isFullsizeVideoSnapSupported()) {
+            String videoSnapSize = mPreferences.getString(
+                             CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE, null);
+            List<Size> supported = mParameters.getSupportedPictureSizes();
+            if (videoSnapSize == null) {
+                CameraSettings.initialCameraPictureSize(this, mParameters);
+                Size temp = mParameters.getPictureSize();
+                videoSnapSize = String.format("%dx%d", temp.width, temp.height);
+            }
+            int index = videoSnapSize.indexOf('x');
+            int width = Integer.parseInt(videoSnapSize.substring(0, index));
+            int height = Integer.parseInt(videoSnapSize.substring(index + 1));
+
+            if ( width < mProfile.videoFrameWidth ||
+                 height < mProfile.videoFrameHeight) {
+                // Let the user know that snapshot resolutions lesser than
+                // video size is not supported.
+                 mHandler.sendEmptyMessage(SHOW_VIDEOSNAP_CAPPING_MSG);
+                 videoSnapSize = String.format("%dx%d",
+                 mProfile.videoFrameWidth, mProfile.videoFrameHeight);
+            }
+            CameraSettings.setCameraPictureSize(
+                           videoSnapSize, supported, mParameters);
+        }
+    }
+
     private void readVideoPreferences() {
         // The preference stores values from ListPreference and is thus string type for all values.
         // We need to convert it to int manually.
@@ -910,19 +943,9 @@ public class VideoCamera extends ActivityBase
         mProfile = CamcorderProfile.get(mCameraId, quality);
         getDesiredPreviewSize();
 
-        //Video Snapshot Picture size
         if(mParameters.isFullsizeVideoSnapSupported()) {
             Size old_size = mParameters.getPictureSize();
-            String videoSnapSize = mPreferences.getString(
-                    CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE, null);
-            if (videoSnapSize == null) {
-                CameraSettings.initialCameraPictureSize(this, mParameters);
-            } else {
-                List<Size> supported = mParameters.getSupportedPictureSizes();
-                CameraSettings.setCameraPictureSize(
-                        videoSnapSize, supported, mParameters);
-            }
-
+            configVideoSnapshotSize();
             // Set the preview frame aspect ratio according to the picture size.
             Size size = mParameters.getPictureSize();
             Log.v(TAG, "New Video picture size : "+ size.width + " " + size.height);
@@ -1234,6 +1257,14 @@ public class VideoCamera extends ActivityBase
                 break;
             case KeyEvent.KEYCODE_MENU:
                 if (mMediaRecorderRecording) return true;
+                break;
+            case KeyEvent.KEYCODE_DPAD_RIGHT:
+                if (event.getRepeatCount() == 0) {
+                    if (mParameters.isFullsizeVideoSnapSupported() &&
+                        mMediaRecorderRecording && !mPausing &&
+                        !mSnapshotInProgress && !effectsActive())
+                        takeVideoSnapshot();
+                }
                 break;
         }
 
@@ -1810,6 +1841,13 @@ public class VideoCamera extends ActivityBase
 
         pauseAudioPlayback();
 
+        if (mParameters.isFullsizeVideoSnapSupported()) {
+            if (((mProfile.videoFrameWidth == 720) && (mProfile.videoFrameHeight == 480)) ||
+                ((mProfile.videoFrameWidth == 176) && (mProfile.videoFrameHeight == 144)))
+                new RotateTextToast(this, R.string.snapshot_qcif_and_d1,
+                                    mOrientation).show();
+        }
+
         if (effectsActive()) {
             try {
                 mEffectsRecorder.startRecording();
@@ -2242,18 +2280,7 @@ public class VideoCamera extends ActivityBase
             mParameters.setColorEffect(colorEffect);
         }
 
-        //Video Snapshot Picture size
-        if(mParameters.isFullsizeVideoSnapSupported()) {
-            String videoSnapSize = mPreferences.getString(
-                    CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE, null);
-            if (videoSnapSize == null) {
-                CameraSettings.initialCameraPictureSize(this, mParameters);
-            } else {
-                supported = mParameters.getSupportedPictureSizes();
-                CameraSettings.setCameraPictureSize(
-                        videoSnapSize, supported, mParameters);
-            }
-        }
+        configVideoSnapshotSize();
 
         mCameraDevice.setParameters(mParameters);
         // Keep preview size up to date.
@@ -2679,6 +2706,19 @@ public class VideoCamera extends ActivityBase
         }
     }
 
+    private void takeVideoSnapshot() {
+        // Set rotation and gps data.
+        Util.setRotationParameter(mParameters, mCameraId, mOrientation);
+        Location loc = mLocationManager.getCurrentLocation();
+        Util.setGpsParameters(mParameters, loc);
+        mCameraDevice.setParameters(mParameters);
+
+        Log.v(TAG, "Video snapshot start");
+        mCameraDevice.takePicture(null, null, null, new JpegPictureCallback(loc));
+        showVideoSnapshotUI(true);
+        mSnapshotInProgress = true;
+    }
+
     // Preview area is touched. Take a picture.
     @Override
     public boolean onTouch(View v, MotionEvent e) {
@@ -2696,17 +2736,7 @@ public class VideoCamera extends ActivityBase
                 || !mMediaRecorderRecording || effectsActive()) {
             return false;
         }
-
-        // Set rotation and gps data.
-        Util.setRotationParameter(mParameters, mCameraId, mOrientation);
-        Location loc = mLocationManager.getCurrentLocation();
-        Util.setGpsParameters(mParameters, loc);
-        mCameraDevice.setParameters(mParameters);
-
-        Log.v(TAG, "Video snapshot start");
-        mCameraDevice.takePicture(null, null, null, new JpegPictureCallback(loc));
-        showVideoSnapshotUI(true);
-        mSnapshotInProgress = true;
+        takeVideoSnapshot();
         return true;
     }
 
@@ -2794,5 +2824,12 @@ public class VideoCamera extends ActivityBase
         Editor editor = mPreferences.edit();
         editor.putBoolean(CameraSettings.KEY_VIDEO_FIRST_USE_HINT_SHOWN, false);
         editor.apply();
+    }
+
+    private void showUserMsg(int msgId) {
+        if (msgId == SHOW_VIDEOSNAP_CAPPING_MSG) {
+            new RotateTextToast(this, R.string.snapshot_lower_than_video,
+                                mOrientation).show();
+        }
     }
 }
