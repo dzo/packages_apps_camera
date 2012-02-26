@@ -160,9 +160,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private static final int UPDATE_PARAM_ZOOM = 2;
     private static final int UPDATE_PARAM_PREFERENCE = 4;
     private static final int UPDATE_PARAM_ALL = -1;
-    private static final int FACE_DETECTION_OFF = 0;
-    private static final int FACE_DETECTION_ON = 1;
-    public static int mFaceDetect = FACE_DETECTION_OFF;
 
     // When setCameraParametersWhenIdle() is called, we accumulate the subsets
     // needed to be updated in mUpdateSet.
@@ -173,6 +170,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     private static final int ZOOM_STOPPED = 0;
     private static final int ZOOM_START = 1;
     private static final int ZOOM_STOPPING = 2;
+
+    public boolean mFaceDetectionEnabled = false;
 
     private int mZoomState = ZOOM_STOPPED;
     private boolean mSmoothZoomSupported = false;
@@ -509,7 +508,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
         initializeZoom();
         updateOnScreenIndicators();
+
         startFaceDetection();
+
         // Show the tap to focus toast if this is the first start.
         if (mFocusAreaSupported &&
                 mPreferences.getBoolean(CameraSettings.KEY_CAMERA_FIRST_USE_HINT_SHOWN, true)) {
@@ -643,7 +644,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     @Override
     public void startFaceDetection() {
-        if (mFaceDetectionStarted || mCameraState != IDLE) return;
+        if (mFaceDetectionEnabled == false
+                || mFaceDetectionStarted || mCameraState != IDLE) return;
         if (mParameters.getMaxNumDetectedFaces() > 0) {
             mFaceDetectionStarted = true;
             mFaceView = (FaceView) findViewById(R.id.face_view);
@@ -654,24 +656,20 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             mFaceView.setMirror(info.facing == CameraInfo.CAMERA_FACING_FRONT);
             mFaceView.resume();
             mCameraDevice.setFaceDetectionListener(this);
-            if (mFaceDetect == FACE_DETECTION_OFF) {
-              mCameraDevice.startFaceDetection();
-              mFaceDetect = FACE_DETECTION_ON;
-          }
+            mCameraDevice.startFaceDetection();
         }
      }
 
     @Override
     public void stopFaceDetection() {
-        if (!mFaceDetectionStarted) return;
+        if (mFaceDetectionEnabled == false || mFaceDetectionStarted == false)
+            return;
         if (mParameters.getMaxNumDetectedFaces() > 0) {
             mFaceDetectionStarted = false;
             mCameraDevice.setFaceDetectionListener(null);
-          if (mFaceDetect == FACE_DETECTION_ON) {
             mCameraDevice.stopFaceDetection();
-            mFaceDetect = FACE_DETECTION_OFF;
-          }
             if (mFaceView != null) mFaceView.clear();
+//            mFaceView.setVisibility(View.INVISIBLE);
         }
     }
 
@@ -2526,9 +2524,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
          if (isSupported(faceDetection, mParameters.getSupportedFaceDetectionModes())) {
              mParameters.setFaceDetectionMode(faceDetection);
-             if(faceDetection.equals("on")) {
+             if(faceDetection.equals("on") && mFaceDetectionEnabled == false) {
+               mFaceDetectionEnabled = true;
                startFaceDetection();
-             } else {
+             }
+             if(faceDetection.equals("off") && mFaceDetectionEnabled == true) {
+               mFaceDetectionEnabled = false;
                stopFaceDetection();
              }
          }
@@ -2958,7 +2959,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     @Override
     public void onFaceDetection(Face[] faces, android.hardware.Camera camera) {
-        mFaceView.setFaces(faces);
+            mFaceView.setFaces(faces);
     }
 
     private void showTapToFocusToast() {
