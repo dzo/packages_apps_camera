@@ -90,8 +90,10 @@ public class FocusManager {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case RESET_TOUCH_FOCUS: {
-                    cancelAutoFocus();
-                    mListener.startFaceDetection();
+// Temporarily disable cancelling the focus after touch
+// This will keep the touched area in AEC ROI until snapshot is taken
+//                    cancelAutoFocus();
+//                    mListener.startFaceDetection();
                     break;
                 }
             }
