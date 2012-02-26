@@ -288,6 +288,9 @@ public class VideoCamera extends ActivityBase
     private final ZoomListener mZoomListener = new ZoomListener();
 
     private boolean mVideoSnapSizeChanged = false;
+    private int mOriginVideoBitRate;
+    private int mVideoBitRateMultiplier = 1;
+    private boolean mNoAudio = false;
 
     private boolean mRestartPreview = false;
     private int videoWidth; 
@@ -945,6 +948,8 @@ public class VideoCamera extends ActivityBase
         // TODO: This should be checked instead directly +1000.
         if (mCaptureTimeLapse) quality += 1000;
         mProfile = CamcorderProfile.get(mCameraId, quality);
+        mOriginVideoBitRate = mProfile.videoBitRate;
+        mVideoBitRateMultiplier = 1;
         getDesiredPreviewSize();
 
         if(mParameters.isFullsizeVideoSnapSupported()) {
@@ -1427,13 +1432,29 @@ public class VideoCamera extends ActivityBase
         // Unlock the camera object before passing it to media recorder.
         mCameraDevice.unlock();
         mMediaRecorder.setCamera(mCameraDevice);
-        if (!mCaptureTimeLapse) {
-            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
-        }
         String hfr = mParameters.getVideoHighFrameRate();
+        if (!mCaptureTimeLapse && ((hfr == null) || ("off".equals(hfr))) ) {
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+            mNoAudio = false;
+        } else {
+            mNoAudio = true;
+        }
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
-
-        mProfile.audioCodec = mAudioEncoder;
+        mVideoBitRateMultiplier = 1;
+        if(hfr != null) {
+            if ("60".equals(hfr))
+                mVideoBitRateMultiplier = 2;
+            else if ("90".equals(hfr))
+                mVideoBitRateMultiplier = 3;
+            else if ("120".equals(hfr))
+                mVideoBitRateMultiplier = 4;
+        }
+        mProfile.videoBitRate = mOriginVideoBitRate * mVideoBitRateMultiplier;
+        if (mNoAudio) {
+            mProfile.audioCodec = -1;  //not set
+        } else {
+            mProfile.audioCodec = mAudioEncoder;
+        }
         mProfile.videoCodec = mVideoEncoder;
         mProfile.duration = mMaxVideoDurationInMs;
 
