@@ -414,8 +414,8 @@
     </string-array>
     <!-- Camera Preferences Scene Mode dialog box entries -->
     <string-array name="pref_camera_scenemode_entries" translatable="false">
-        <item>@string/pref_camera_scenemode_entry_off</item>
         <item>@string/pref_camera_scenemode_entry_auto</item>
+        <item>@string/pref_camera_scenemode_entry_asd</item>
         <item>@string/pref_camera_scenemode_entry_action</item>
         <item>@string/pref_camera_scenemode_entry_portrait</item>
         <item>@string/pref_camera_scenemode_entry_landscape</item>
