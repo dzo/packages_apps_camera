@@ -373,13 +373,12 @@ public class Util {
 
     public static Size getOptimalPreviewSize(Activity currentActivity,
             List<Size> sizes, double targetRatio) {
-        // a very small tolerance for floating point comparison
-        final double ASPECT_TOLERANCE = 0.00001;
+        // Use a very small tolerance because we want an exact match.
+        final double ASPECT_TOLERANCE = 0.001;
         if (sizes == null) return null;
 
         Size optimalSize = null;
         double minDiff = Double.MAX_VALUE;
-        double minAspectRatioDiff = Double.MAX_VALUE;
 
         // Because of bugs of overlay and layout, we sometimes will try to
         // layout the viewfinder in the portrait orientation and thus get the
@@ -396,22 +395,13 @@ public class Util {
             targetHeight = display.getHeight();
         }
 
-        // First in all sizes not greater than target size, find an aspect ratio
-        // that is closest to requested ratio
+        // Try to find an size match aspect ratio and size
         for (Size size : sizes) {
             double ratio = (double) size.width / size.height;
-            if (size.height <= targetHeight && Math.abs(ratio - targetRatio) < minAspectRatioDiff)
-                minAspectRatioDiff = Math.abs(ratio-targetRatio);
-        }
-        // Then find the size with minAspectRatioDiff closest to target size
-        for (Size size : sizes) {
-            double ratio = (double) size.width / size.height;
-            double aspectRatioDiff = Math.abs(ratio - targetRatio);
-            if (size.height <= targetHeight) {
-                if (aspectRatioDiff - minAspectRatioDiff > ASPECT_TOLERANCE)
-                    continue;
-                if (optimalSize == null || optimalSize.height < size.height)
-                    optimalSize = size;
+            if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
+            if (Math.abs(size.height - targetHeight) < minDiff) {
+                optimalSize = size;
+                minDiff = Math.abs(size.height - targetHeight);
             }
         }
 
