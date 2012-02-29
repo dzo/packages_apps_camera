@@ -158,7 +158,56 @@ public class VideoCamera extends ActivityBase
 
     private static final String EFFECT_BG_FROM_GALLERY = "gallery";
 
-    private final CameraErrorCallback mErrorCallback = new CameraErrorCallback();
+    private void stopVideoCamera() {
+        if (mIndicatorControlContainer != null) {
+            mIndicatorControlContainer.dismissSettingPopup();
+        }
+
+        finishRecorderAndCloseCamera();
+        closeVideoFileDescriptor();
+
+        if (mSharePopup != null) mSharePopup.dismiss();
+
+        if (mReceiver != null) {
+            unregisterReceiver(mReceiver);
+            mReceiver = null;
+        }
+        resetScreenOn();
+
+        if (!mIsVideoCaptureIntent && mThumbnail != null && !mThumbnail.fromFile()) {
+            mThumbnail.saveTo(new File(getFilesDir(), Thumbnail.LAST_THUMB_FILENAME));
+        }
+
+        if (mStorageHint != null) {
+            mStorageHint.cancel();
+            mStorageHint = null;
+        }
+
+        mOrientationListener.disable();
+        mLocationManager.recordLocation(false);
+
+        mHandler.removeMessages(CHECK_DISPLAY_ROTATION);
+    }
+
+    private class CameraErrorCb
+        implements android.hardware.Camera.ErrorCallback {
+        private static final String TAG = "CameraErrorCallback";
+
+        public void onError(int error, android.hardware.Camera camera) {
+            Log.e(TAG, "Got camera error callback. error=" + error);
+            if (error == android.hardware.Camera.CAMERA_ERROR_SERVER_DIED) {
+                // We are not sure about the current state of the app (in preview or
+                // snapshot or recording). Closing the app is better than creating a
+                // new Camera object.
+                throw new RuntimeException("Media server died.");
+            } else if (error == android.hardware.Camera.CAMERA_ERROR_UNKNOWN) {
+                stopVideoCamera();
+                Util.showErrorAndFinish(VideoCamera.this, R.string.cannot_connect_camera);
+            }
+        }
+    }
+
+    private final CameraErrorCb mErrorCallback = new CameraErrorCb();
 
     private ComboPreferences mPreferences;
     private PreferenceGroup mPreferenceGroup;
@@ -1192,35 +1241,7 @@ public class VideoCamera extends ActivityBase
     protected void onPause() {
         super.onPause();
         mPausing = true;
-
-        if (mIndicatorControlContainer != null) {
-            mIndicatorControlContainer.dismissSettingPopup();
-        }
-
-        finishRecorderAndCloseCamera();
-        closeVideoFileDescriptor();
-
-        if (mSharePopup != null) mSharePopup.dismiss();
-
-        if (mReceiver != null) {
-            unregisterReceiver(mReceiver);
-            mReceiver = null;
-        }
-        resetScreenOn();
-
-        if (!mIsVideoCaptureIntent && mThumbnail != null && !mThumbnail.fromFile()) {
-            mThumbnail.saveTo(new File(getFilesDir(), Thumbnail.LAST_THUMB_FILENAME));
-        }
-
-        if (mStorageHint != null) {
-            mStorageHint.cancel();
-            mStorageHint = null;
-        }
-
-        mOrientationListener.disable();
-        mLocationManager.recordLocation(false);
-
-        mHandler.removeMessages(CHECK_DISPLAY_ROTATION);
+        stopVideoCamera();
     }
 
     @Override
