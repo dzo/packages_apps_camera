@@ -289,6 +289,10 @@ public class VideoCamera extends ActivityBase
 
     private boolean mVideoSnapSizeChanged = false;
 
+    private boolean mRestartPreview = false;
+    private int videoWidth; 
+    private int videoHeight;
+
     //
     // DefaultHashMap is a HashMap which returns a default value if the specified
     // key is not found.
@@ -1389,8 +1393,8 @@ public class VideoCamera extends ActivityBase
         Intent intent = getIntent();
         Bundle myExtras = intent.getExtras();
 
-        int videoWidth = mProfile.videoFrameWidth;
-        int videoHeight = mProfile.videoFrameHeight;
+        videoWidth = mProfile.videoFrameWidth;
+        videoHeight = mProfile.videoFrameHeight;
         mUnsupportedResolution = false;
 
         if (mVideoEncoder == MediaRecorder.VideoEncoder.H263) {
@@ -2155,7 +2159,6 @@ public class VideoCamera extends ActivityBase
 
     private void setCameraParameters() {
         mParameters = mCameraDevice.getParameters();
-        int videoWidth, videoHeight;
 
         mParameters.setPreviewSize(mDesiredPreviewWidth, mDesiredPreviewHeight);
         mParameters.setPreviewFrameRate(mProfile.videoFrameRate);
@@ -2468,10 +2471,20 @@ public class VideoCamera extends ActivityBase
             } else {
                 readVideoPreferences();
                 showTimeLapseUI(mCaptureTimeLapse);
+
+                //To restart the preview even if record size changes..
+                //Remove once HAL change is ready
+                if(mProfile.videoFrameWidth != videoWidth ||
+                   mProfile.videoFrameHeight != videoHeight ) {
+                    videoWidth = mProfile.videoFrameWidth;
+                    videoHeight = mProfile.videoFrameHeight;
+                    mRestartPreview = true;
+                }
+
                 // We need to restart the preview if preview size is changed.
                 Size size = mParameters.getPreviewSize();
                 if (size.width != mDesiredPreviewWidth
-                        || size.height != mDesiredPreviewHeight) {
+                        || size.height != mDesiredPreviewHeight || mRestartPreview) {
                     if (!effectsActive()) {
                         mCameraDevice.stopPreview();
                     } else {
@@ -2479,6 +2492,7 @@ public class VideoCamera extends ActivityBase
                     }
                     resizeForPreviewAspectRatio();
                     startPreview(); // Parameters will be set in startPreview().
+                    mRestartPreview = false;
                 }else if(mVideoSnapSizeChanged){
                     //Restart Preview for Full size Live shot picture dimension change
                     if (!effectsActive()) {
