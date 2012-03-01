@@ -475,6 +475,12 @@
     <!-- The messsage shown if user selects a snapshot resolution lower than the current video size. -->
     <string name="snapshot_lower_than_video">Video snapshot size lower than video size. Capping to Video size. Please select a resolution higher or equal to the current video size. </string>
 
+    <!-- The messsage shown if user selects a snapshot resolution in low power mode. -->
+    <string name="snapshotsize_low_powermode">We do not support picture
+        resolution in Low Power Mode. Video size snapshot will be taken. Please
+        select High power mode for picture size.
+    </string>
+
     <!-- The messsage shown if user tries to take snapshot during D1/QCIF resolution. -->
     <string name="snapshot_qcif_and_d1">Only Video size snapshot supported for this resolution. </string>
 
@@ -752,4 +758,18 @@
     <string name="pref_camera_ae_bracket_hdr_default" translatable="false">Off</string>
 
      <string name="err_app_unsupport_ae_bracket_code">no ae bracket support by Apps now</string>
+
+    <!-- Settings screen, Power Mode title -->
+    <string name="pref_camera_powermode_title">Power Mode</string>
+
+    <!-- Settings screen, Power mode dialog radio button choices -->
+    <string name="pref_camera_powermode_entry_lp">Low_Power</string>
+    <string name="pref_camera_powermode_entry_np">Normal_Power</string>
+
+    <!-- Settings screen, Power mode dialog radio button choices -->
+    <string name="pref_camera_powermode_value_lp">Low_Power</string>
+    <string name="pref_camera_powermode_value_np">Normal_Power</string>
+
+    <!-- Default Power mode.. -->
+    <string name="pref_camera_powermode_default" translatable="false">Normal_Power</string>
 </resources>
