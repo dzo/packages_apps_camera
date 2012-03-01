@@ -107,7 +107,8 @@ public class VideoCamera extends ActivityBase
                     CameraSettings.KEY_AUDIO_ENCODER,
                     CameraSettings.KEY_VIDEO_DURATION,
                     CameraSettings.KEY_COLOR_EFFECT,
-                    CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE
+                    CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
+                    CameraSettings.KEY_POWER_MODE
         };
     public HashMap otherSettingKeys = new HashMap(2);
 
@@ -117,6 +118,7 @@ public class VideoCamera extends ActivityBase
     private static final int ENABLE_SHUTTER_BUTTON = 6;
     private static final int SHOW_TAP_TO_SNAPSHOT_TOAST = 7;
     private static final int SHOW_VIDEOSNAP_CAPPING_MSG = 8;
+    private static final int SHOW_LOWPOWER_MODE = 9;
 
     private static final int SCREEN_DELAY = 2 * 60 * 1000;
 
@@ -465,6 +467,7 @@ public class VideoCamera extends ActivityBase
                 }
 
                 case SHOW_VIDEOSNAP_CAPPING_MSG:
+                case SHOW_LOWPOWER_MODE:
                     showUserMsg(msg.what);
                     break;
 
@@ -871,7 +874,7 @@ public class VideoCamera extends ActivityBase
 
     private void configVideoSnapshotSize() {
       //Video Snapshot Picture size
-        if(mParameters.isFullsizeVideoSnapSupported()) {
+        if(mParameters.isPowerModeSupported()) {
             String videoSnapSize = mPreferences.getString(
                              CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE, null);
             List<Size> supported = mParameters.getSupportedPictureSizes();
@@ -999,17 +1002,34 @@ public class VideoCamera extends ActivityBase
         mProfile = CamcorderProfile.get(mCameraId, quality);
         getDesiredPreviewSize();
 
-        if(mParameters.isFullsizeVideoSnapSupported()) {
+        if(mParameters.isPowerModeSupported()) {
+            String powermode = mPreferences.getString(
+                    CameraSettings.KEY_POWER_MODE,
+                    getString(R.string.pref_camera_powermode_default));
+            Log.v(TAG, "read videopreferences power mode =" +powermode);
+            String old_mode = mParameters.getPowerMode();
+            if(!old_mode.equals(powermode))
+            {
+                mRestartPreview = true;
+                mParameters.setPowerMode(powermode);
+            }
+
             Size old_size = mParameters.getPictureSize();
             configVideoSnapshotSize();
             // Set the preview frame aspect ratio according to the picture size.
             Size size = mParameters.getPictureSize();
             Log.v(TAG, "New Video picture size : "+ size.width + " " + size.height);
             if(!size.equals(old_size)){
-                Log.v(TAG, "new Video size id different from old picture size , restart..");
-                mVideoSnapSizeChanged = true;
+                if(powermode.equals("Normal_Power")) {
+                    Log.v(TAG, "new Video size id different from old picture size , restart..");
+                    mVideoSnapSizeChanged = true;
+                }else{
+                    //Need to change
+                    mHandler.sendEmptyMessage(SHOW_LOWPOWER_MODE);
+                }
             }
         }
+
     }
 
     private void writeDefaultEffectToPrefs()  {
@@ -1288,7 +1308,7 @@ public class VideoCamera extends ActivityBase
                 break;
             case KeyEvent.KEYCODE_DPAD_RIGHT:
                 if (event.getRepeatCount() == 0) {
-                    if (mParameters.isFullsizeVideoSnapSupported() &&
+                    if (mParameters.isPowerModeSupported() &&
                         mMediaRecorderRecording && !mPausing &&
                         !mSnapshotInProgress && !effectsActive())
                         takeVideoSnapshot();
@@ -1869,7 +1889,7 @@ public class VideoCamera extends ActivityBase
 
         pauseAudioPlayback();
 
-        if (mParameters.isFullsizeVideoSnapSupported()) {
+        if (mParameters.isPowerModeSupported()) {
             if (((mProfile.videoFrameWidth == 720) && (mProfile.videoFrameHeight == 480)) ||
                 ((mProfile.videoFrameWidth == 176) && (mProfile.videoFrameHeight == 144)))
                 new RotateTextToast(this, R.string.snapshot_qcif_and_d1,
@@ -2316,16 +2336,19 @@ public class VideoCamera extends ActivityBase
             mParameters.setColorEffect(colorEffect);
         }
 
-        //Video Snapshot Picture size
-        if(mParameters.isFullsizeVideoSnapSupported()) {
-            String videoSnapSize = mPreferences.getString(
-                    CameraSettings.KEY_VIDEO_SNAPSHOT_SIZE, null);
-            if (videoSnapSize == null) {
-                CameraSettings.initialCameraPictureSize(this, mParameters);
-            } else {
-                supported = mParameters.getSupportedPictureSizes();
-                CameraSettings.setCameraPictureSize(
-                        videoSnapSize, supported, mParameters);
+        if(mParameters.isPowerModeSupported()) {
+            String powermode = mPreferences.getString(
+                    CameraSettings.KEY_POWER_MODE,
+                    getString(R.string.pref_camera_powermode_default));
+            Log.v(TAG, " Set parameter power mode =" +powermode);
+            String old_mode = mParameters.getPowerMode();
+            if(!old_mode.equals(powermode))
+            {
+                mParameters.setPowerMode(powermode);
+            }
+
+            if(powermode.equals("Normal_Power")) {
+                configVideoSnapshotSize();
             }
         }
 
@@ -2546,6 +2569,7 @@ public class VideoCamera extends ActivityBase
                     }
                     startPreview();
                     mVideoSnapSizeChanged = false;
+                    mRestartPreview = false;
                 }else {
                     setCameraParameters();
                 }
@@ -2887,6 +2911,9 @@ public class VideoCamera extends ActivityBase
     private void showUserMsg(int msgId) {
         if (msgId == SHOW_VIDEOSNAP_CAPPING_MSG) {
             new RotateTextToast(this, R.string.snapshot_lower_than_video,
+                                mOrientation).show();
+        }else if(msgId == SHOW_LOWPOWER_MODE) {
+            new RotateTextToast(this, R.string.snapshotsize_low_powermode,
                                 mOrientation).show();
         }
     }
