@@ -69,6 +69,7 @@
   surface = $previewSurface;
   owidth = $previewWidth;
   oheight = $previewHeight;
+  renderMode="stretch";
 }
 
 // Recording output
