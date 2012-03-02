@@ -939,7 +939,7 @@ public class VideoCamera extends ActivityBase
         String frameIntervalStr = mPreferences.getString(
                 CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
                 getString(R.string.pref_video_time_lapse_frame_interval_default));
-        mTimeBetweenTimeLapseFrameCaptureMs = 0;//Integer.parseInt(frameIntervalStr);
+        mTimeBetweenTimeLapseFrameCaptureMs = Integer.parseInt(frameIntervalStr);
 
         mCaptureTimeLapse = (mTimeBetweenTimeLapseFrameCaptureMs != 0);
         // TODO: This should be checked instead directly +1000.
