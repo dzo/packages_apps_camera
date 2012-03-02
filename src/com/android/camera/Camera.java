@@ -2241,7 +2241,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             Log.v(TAG, "stopPreview");
             mCameraDevice.cancelAutoFocus(); // Reset the focus.
             mCameraDevice.stopPreview();
-            mFaceDetectionStarted = false;
+//            mFaceDetectionStarted = false;
         }
         setCameraState(PREVIEW_STOPPED);
         mFocusManager.onPreviewStopped();
@@ -2556,8 +2556,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                startFaceDetection();
              }
              if(faceDetection.equals("off") && mFaceDetectionEnabled == true) {
-               mFaceDetectionEnabled = false;
                stopFaceDetection();
+               mFaceDetectionEnabled = false;
              }
          }
 
