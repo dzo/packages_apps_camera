@@ -100,7 +100,6 @@ public class CameraSettings {
     public static final String KEY_AUDIO_ENCODER = "pref_camera_audioencoder_key";
     public static final String KEY_VIDEO_DURATION = "pref_camera_video_duration_key";
     public static final String KEY_ZSL = "pref_camera_zsl_key";
-    public static final String KEY_POWER_MODE = "pref_camera_powermode_key";
     private static final String TAG = "CameraSettings";
 
     private final Context mContext;
@@ -206,7 +205,6 @@ public class CameraSettings {
         ListPreference videoEffect = group.findPreference(KEY_VIDEO_EFFECT);
         ListPreference zsl = group.findPreference(KEY_ZSL);
         ListPreference videoSnapSize = group.findPreference(KEY_VIDEO_SNAPSHOT_SIZE);
-        ListPreference powerMode = group.findPreference(KEY_POWER_MODE);
 
         // Since the screen could be loaded from different resources, we need
         // to check if the preference is available here
@@ -328,7 +326,7 @@ public class CameraSettings {
                     hfr, mParameters.getSupportedVideoHighFrameRateModes());
         }
 
-        if (!mParameters.isPowerModeSupported())
+        if (!mParameters.isFullsizeVideoSnapSupported())
         {
              filterUnsupportedOptions(group,
                     videoSnapSize, null);
