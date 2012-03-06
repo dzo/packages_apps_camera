@@ -707,8 +707,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             setCameraParametersWhenIdle(UPDATE_PARAM_ZOOM);
         }
     }
-
     @Override
+
     public void startFaceDetection() {
         if (mFaceDetectionEnabled == false
                 || mFaceDetectionStarted || mCameraState != IDLE) return;
@@ -2375,6 +2375,22 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 // sizes, so set and read the parameters to get lastest values
                 mCameraDevice.setParameters(mParameters);
                 mParameters = mCameraDevice.getParameters();
+            }
+            // Set jpeg thumbnail size according picture aspect ratio
+            List<Size> thumbnail_sizes = mParameters.getSupportedJpegThumbnailSizes();
+            Size currThumbnailSize = mParameters.getJpegThumbnailSize();
+
+            /* Get recommended postview/thumbnail sizes based on aspect ratio */
+            int mAspectRatio = (int)((optimalSize.width * 4096) / optimalSize.height);
+            int mTempAspectRatio;
+            for (Size s : thumbnail_sizes) {
+                mTempAspectRatio = (int) ((s.width * 4096) / s.height);
+                if(mTempAspectRatio == mAspectRatio)
+                {
+                     Log.v(TAG, "Setting thumbnail width:"+s.width +" height:"+ s.height);
+                     mParameters.setJpegThumbnailSize(s.width, s.height);
+                     break;
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "Handled NULL pointer Exception");
