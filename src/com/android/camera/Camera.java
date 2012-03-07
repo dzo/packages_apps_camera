@@ -124,7 +124,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             CameraSettings.KEY_TOUCH_AF_AEC,
             //CameraSettings.KEY_SKIN_TONE_ENHANCEMENT,
             CameraSettings.KEY_SELECTABLE_ZONE_AF,
-            CameraSettings.KEY_SHARPNESS
+            CameraSettings.KEY_SHARPNESS,
+            CameraSettings.KEY_ISO,
+            CameraSettings.KEY_FOCUS_MODE,
         };
     private static final String[] OTHER_SETTING_KEYS_2 = {
             CameraSettings.KEY_ISO,
@@ -1575,7 +1577,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         loadCameraPreferences();
         otherSettingKeys.put(0, OTHER_SETTING_KEYS);
         otherSettingKeys.put(1, OTHER_SETTING_KEYS_1);
-        otherSettingKeys.put(2, OTHER_SETTING_KEYS_2);
+//        otherSettingKeys.put(2, OTHER_SETTING_KEYS_2);
         final String[] SETTING_KEYS = {
                 CameraSettings.KEY_FLASH_MODE,
                 CameraSettings.KEY_WHITE_BALANCE,
