@@ -301,6 +301,72 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private LocationManager mLocationManager;
 
+    private void stopCamera() {
+        if(mGraphView != null)
+            mGraphView.setCameraObject(null);
+
+        stopPreview();
+        // Close the camera now because other activities may need to use it.
+        closeCamera();
+        if (mCameraSound != null) mCameraSound.release();
+        resetScreenOn();
+
+        // Clear UI.
+        collapseCameraControls();
+        if (mSharePopup != null) mSharePopup.dismiss();
+        if (mFaceView != null) mFaceView.clear();
+
+        if (mFirstTimeInitialized) {
+            mOrientationListener.disable();
+            if (mImageSaver != null) {
+                mImageSaver.finish();
+                mImageSaver = null;
+            }
+            if (!mIsImageCaptureIntent && mThumbnail != null && !mThumbnail.fromFile()) {
+                mThumbnail.saveTo(new File(getFilesDir(), Thumbnail.LAST_THUMB_FILENAME));
+            }
+        }
+
+        if (mDidRegister) {
+            unregisterReceiver(mReceiver);
+            mDidRegister = false;
+        }
+        if (mLocationManager != null) mLocationManager.recordLocation(false);
+        updateExposureOnScreenIndicator(0);
+
+        if (mStorageHint != null) {
+            mStorageHint.cancel();
+            mStorageHint = null;
+        }
+
+        // If we are in an image capture intent and has taken
+        // a picture, we just clear it in onPause.
+        mJpegImageData = null;
+
+        // Remove the messages in the event queue.
+        mHandler.removeMessages(FIRST_TIME_INIT);
+        mHandler.removeMessages(CHECK_DISPLAY_ROTATION);
+        mFocusManager.removeMessages();
+    }
+
+    private class CameraErrorCb
+        implements android.hardware.Camera.ErrorCallback {
+        private static final String TAG = "CameraErrorCallback";
+
+        public void onError(int error, android.hardware.Camera camera) {
+            Log.e(TAG, "Got camera error callback. error=" + error);
+            if (error == android.hardware.Camera.CAMERA_ERROR_SERVER_DIED) {
+                // We are not sure about the current state of the app (in preview or
+                // snapshot or recording). Closing the app is better than creating a
+                // new Camera object.
+                throw new RuntimeException("Media server died.");
+            } else if (error == android.hardware.Camera.CAMERA_ERROR_UNKNOWN) {
+                stopCamera();
+                Util.showErrorAndFinish(Camera.this, R.string.cannot_connect_camera);
+            }
+        }
+    }
+
     private final ShutterCallback mShutterCallback = new ShutterCallback();
     private final PostViewPictureCallback mPostViewPictureCallback =
             new PostViewPictureCallback();
@@ -310,7 +376,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
             new AutoFocusCallback();
     private final StatsCallback mStatsCallback = new StatsCallback();
     private final ZoomListener mZoomListener = new ZoomListener();
-    private final CameraErrorCallback mErrorCallback = new CameraErrorCallback();
+    private final CameraErrorCb mErrorCallback = new CameraErrorCb();
 
     private long mFocusStartTime;
     private long mCaptureStartTime;
@@ -360,7 +426,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private int mSnapshotMode;
     private boolean zslrestartPreview;
- 
+
     /**
      * This Handler is used to post message back onto the main thread of the
      * application
@@ -1004,7 +1070,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         public void onStopTrackingTouch(SeekBar bar) {
             Log.e(TAG, "yyan Set onStopTrackingTouch mskinToneValue = " + mskinToneValue);
             Editor editor = mPreferences.edit();
-            editor.putString(CameraSettings.KEY_SKIN_TONE_ENHANCEMENT_FACTOR, 
+            editor.putString(CameraSettings.KEY_SKIN_TONE_ENHANCEMENT_FACTOR,
                              Integer.toString(mskinToneValue));
             editor.apply();
         }
@@ -1821,7 +1887,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
        // for same Camera Device instance
         if (mSkinToneSeekBar != true)
         {
-            Log.e(TAG, "yyan send tone bar: mSkinToneSeekBar = " + mSkinToneSeekBar);    
+            Log.e(TAG, "yyan send tone bar: mSkinToneSeekBar = " + mSkinToneSeekBar);
             mHandler.sendEmptyMessage(SET_SKIN_TONE_FACTOR);
         }
 
@@ -1875,52 +1941,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     @Override
     protected void onPause() {
         mPausing = true;
-        if(mGraphView != null)
-            mGraphView.setCameraObject(null);
-
-        stopPreview();
-        // Close the camera now because other activities may need to use it.
-        closeCamera();
-        if (mCameraSound != null) mCameraSound.release();
-        resetScreenOn();
-
-        // Clear UI.
-        collapseCameraControls();
-        if (mSharePopup != null) mSharePopup.dismiss();
-        if (mFaceView != null) mFaceView.clear();
-
-        if (mFirstTimeInitialized) {
-            mOrientationListener.disable();
-            if (mImageSaver != null) {
-                mImageSaver.finish();
-                mImageSaver = null;
-            }
-            if (!mIsImageCaptureIntent && mThumbnail != null && !mThumbnail.fromFile()) {
-                mThumbnail.saveTo(new File(getFilesDir(), Thumbnail.LAST_THUMB_FILENAME));
-            }
-        }
-
-        if (mDidRegister) {
-            unregisterReceiver(mReceiver);
-            mDidRegister = false;
-        }
-        if (mLocationManager != null) mLocationManager.recordLocation(false);
-        updateExposureOnScreenIndicator(0);
-
-        if (mStorageHint != null) {
-            mStorageHint.cancel();
-            mStorageHint = null;
-        }
-
-        // If we are in an image capture intent and has taken
-        // a picture, we just clear it in onPause.
-        mJpegImageData = null;
-
-        // Remove the messages in the event queue.
-        mHandler.removeMessages(FIRST_TIME_INIT);
-        mHandler.removeMessages(CHECK_DISPLAY_ROTATION);
-        mFocusManager.removeMessages();
-
+        stopCamera();
         super.onPause();
     }
 
