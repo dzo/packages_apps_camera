@@ -1083,37 +1083,25 @@ public class VideoCamera extends ActivityBase
 
     private void getDesiredPreviewSize() {
         mParameters = mCameraDevice.getParameters();
-        List<Size> sizes = mParameters.getSupportedPreviewSizes();
-        Size preferred = mParameters.getPreferredPreviewSizeForVideo();
-
-        int product = preferred.width * preferred.height;
-        Iterator it = sizes.iterator();
-        // Remove the preview sizes that are not preferred.
-        while (it.hasNext()) {
-            Size size = (Size) it.next();
-            if (size.width * size.height > product) {
-                it.remove();
-            }
-        }
-        Size optimalSize = Util.getOptimalPreviewSize(this, sizes,
-            (double) mProfile.videoFrameWidth / mProfile.videoFrameHeight);
-        // If found optimal resolution is larger than the requested,
-        // set desired resolution to the requested resolution, if it is supported
-        if(optimalSize.width > mProfile.videoFrameWidth || optimalSize.height > mProfile.videoFrameHeight){
-                Iterator tit = sizes.iterator();
-                while (tit.hasNext()) {
-                    Size size = (Size) tit.next();
-                    if (size.width == mProfile.videoFrameWidth &&  size.height == mProfile.videoFrameHeight) {
-                        mDesiredPreviewWidth = mProfile.videoFrameWidth;
-                        mDesiredPreviewHeight = mProfile.videoFrameHeight;
-                        break;
-                    }
+        if (mParameters.getSupportedVideoSizes() == null || effectsActive()) {
+            mDesiredPreviewWidth = mProfile.videoFrameWidth;
+            mDesiredPreviewHeight = mProfile.videoFrameHeight;
+        } else {  // Driver supports separates outputs for preview and video.
+            List<Size> sizes = mParameters.getSupportedPreviewSizes();
+            Size preferred = mParameters.getPreferredPreviewSizeForVideo();
+            int product = preferred.width * preferred.height;
+            Iterator it = sizes.iterator();
+            // Remove the preview sizes that are not preferred.
+            while (it.hasNext()) {
+                Size size = (Size) it.next();
+                if (size.width * size.height > product) {
+                    it.remove();
                 }
-        } else {
-         // if found optimal resolution is not greater than
-         // requested resolution , use it.
-             mDesiredPreviewWidth = optimalSize.width;
-             mDesiredPreviewHeight = optimalSize.height;
+            }
+            Size optimalSize = Util.getOptimalPreviewSize(this, sizes,
+                (double) mProfile.videoFrameWidth / mProfile.videoFrameHeight);
+            mDesiredPreviewWidth = optimalSize.width;
+            mDesiredPreviewHeight = optimalSize.height;
         }
         Log.v(TAG, "mDesiredPreviewWidth=" + mDesiredPreviewWidth +
                 ". mDesiredPreviewHeight=" + mDesiredPreviewHeight);
@@ -2273,6 +2261,10 @@ public class VideoCamera extends ActivityBase
 
         videoWidth = mProfile.videoFrameWidth;
         videoHeight = mProfile.videoFrameHeight;
+        if( (((videoWidth == 1280) && (videoHeight == 720)) || ((videoWidth == 1920) && (videoHeight == 1088))))
+            mParameters.setPreviewSize(768, 432);
+        else
+            mParameters.setPreviewSize(videoWidth, videoHeight);
         String recordSize = videoWidth + "x" + videoHeight;
         //To set the parameter KEY_VIDE_SIZE
         mParameters.set("video-size", recordSize);
