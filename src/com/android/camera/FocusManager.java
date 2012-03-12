@@ -445,8 +445,10 @@ public class FocusManager {
         rules[RelativeLayout.CENTER_IN_PARENT] = RelativeLayout.TRUE;
         p.setMargins(0, 0, 0, 0);
 
+        FocusIndicator focusIndicator = mFocusIndicator;
         mFocusArea = null;
         mMeteringArea = null;
+        focusIndicator.clear();
     }
 
     public void calculateTapArea(int focusWidth, int focusHeight, float areaMultiple,

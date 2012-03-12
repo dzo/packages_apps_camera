@@ -1537,13 +1537,14 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
 
     private void overrideCameraSettings(final String flashMode,
             final String whiteBalance, final String focusMode,
-            final String exposureMode) {
+            final String exposureMode, final String touchMode) {
         if (mIndicatorControlContainer != null) {
             mIndicatorControlContainer.overrideSettings(
                     CameraSettings.KEY_FLASH_MODE, flashMode,
                     CameraSettings.KEY_WHITE_BALANCE, whiteBalance,
                     CameraSettings.KEY_FOCUS_MODE, focusMode,
-                    CameraSettings.KEY_EXPOSURE, exposureMode);
+                    CameraSettings.KEY_EXPOSURE, exposureMode,
+                    CameraSettings.KEY_TOUCH_AF_AEC, touchMode);
         }
     }
 
@@ -1553,9 +1554,10 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
         if (!Parameters.SCENE_MODE_AUTO.equals(mSceneMode)) {
             overrideCameraSettings(mParameters.getFlashMode(),
                     mParameters.getWhiteBalance(), mParameters.getFocusMode(),
-                    Integer.toString(mParameters.getExposureCompensation()));
+                    Integer.toString(mParameters.getExposureCompensation()),
+                    mParameters.getTouchAfAec());
         } else {
-            overrideCameraSettings(null, null, null, null);
+            overrideCameraSettings(null, null, null, null, null);
         }
     }
 
@@ -2539,23 +2541,6 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
              mParameters.setAutoExposure(autoExposure);
          }
 
-        // Set Touch AF/AEC parameter.
-        String touchAfAec = mPreferences.getString(
-                 CameraSettings.KEY_TOUCH_AF_AEC,
-                 getString(R.string.pref_camera_touchafaec_default));
-         if (isSupported(touchAfAec, mParameters.getSupportedTouchAfAec())) {
-             mParameters.setTouchAfAec(touchAfAec);
-         }
-
-         try {
-             if(mParameters.getTouchAfAec().equals(mParameters.TOUCH_AF_AEC_ON))
-                 this.mTouchAfAecFlag = true;
-             else
-                 this.mTouchAfAecFlag = false;
-         } catch(Exception e){
-             Log.e(TAG, "Handled NULL pointer Exception");
-         }
-
          // Set Selectable Zone Af parameter.
          String selectableZoneAf = mPreferences.getString(
              CameraSettings.KEY_SELECTABLE_ZONE_AF,
@@ -2701,11 +2686,29 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                     whiteBalance = Parameters.WHITE_BALANCE_AUTO;
                 }
             }
+            // Set Touch AF/AEC parameter.
+            String touchAfAec = mPreferences.getString(
+                 CameraSettings.KEY_TOUCH_AF_AEC,
+                 getString(R.string.pref_camera_touchafaec_default));
+            if (isSupported(touchAfAec, mParameters.getSupportedTouchAfAec())) {
+                mParameters.setTouchAfAec(touchAfAec);
+            }
+
             // Set focus mode.
             mFocusManager.overrideFocusMode(null);
             mParameters.setFocusMode(mFocusManager.getFocusMode());
         } else {
+            mParameters.setTouchAfAec(mParameters.TOUCH_AF_AEC_OFF);
+            mFocusManager.resetTouchFocus();
             mFocusManager.overrideFocusMode(mParameters.getFocusMode());
+        }
+        try {
+            if(mParameters.getTouchAfAec().equals(mParameters.TOUCH_AF_AEC_ON))
+                this.mTouchAfAecFlag = true;
+            else
+                this.mTouchAfAecFlag = false;
+        } catch(Exception e){
+            Log.e(TAG, "Handled NULL pointer Exception");
         }
     }
 
