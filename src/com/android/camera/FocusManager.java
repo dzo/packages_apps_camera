@@ -45,7 +45,7 @@ public class FocusManager {
 
     private static final int RESET_TOUCH_FOCUS = 0;
     private static final int FOCUS_BEEP_VOLUME = 100;
-    private static final int RESET_TOUCH_FOCUS_DELAY = 3000;
+    private static final int RESET_TOUCH_FOCUS_DELAY = 5000;
 
     private int mState = STATE_IDLE;
     public static final int STATE_IDLE = 0; // Focus is not active.
@@ -90,10 +90,8 @@ public class FocusManager {
         public void handleMessage(Message msg) {
             switch (msg.what) {
                 case RESET_TOUCH_FOCUS: {
-// Temporarily disable cancelling the focus after touch
-// This will keep the touched area in AEC ROI until snapshot is taken
-//                    cancelAutoFocus();
-//                    mListener.startFaceDetection();
+                    cancelAutoFocus();
+                    mListener.startFaceDetection();
                     break;
                 }
             }
@@ -495,9 +493,6 @@ public class FocusManager {
     }
 
     private boolean needAutoFocusCall() {
-        if(mZslEnabled) {
-            return false;
-        }
         String focusMode = getFocusMode();
         return !(focusMode.equals(Parameters.FOCUS_MODE_INFINITY)
                 || focusMode.equals(Parameters.FOCUS_MODE_FIXED)
