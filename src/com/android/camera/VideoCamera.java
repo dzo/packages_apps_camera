@@ -87,6 +87,7 @@ import android.os.SystemProperties;
 import android.filterpacks.videosink.MediaRecorderStopException;
 
 import java.util.HashMap;
+import android.os.SystemProperties;
 
 /**
  * The Camcorder activity.
@@ -341,10 +342,11 @@ public class VideoCamera extends ActivityBase
     private ZoomControl mZoomControl;
     private final ZoomListener mZoomListener = new ZoomListener();
 
+    private boolean mHfr = false;
     private boolean mVideoSnapSizeChanged = false;
 
     private boolean mRestartPreview = false;
-    private int videoWidth; 
+    private int videoWidth;
     private int videoHeight;
 
     //
@@ -1369,6 +1371,7 @@ public class VideoCamera extends ActivityBase
             stopVideoRecording();
             startPreview();
         }
+        updateUIforHFR( );
     }
 
     public void surfaceCreated(SurfaceHolder holder) {
@@ -2372,6 +2375,58 @@ public class VideoCamera extends ActivityBase
         }
     }
 
+    private void  updateUIforHFR() {
+        if (mPreferences != null &&
+            mIndicatorControlContainer != null) {
+
+            String HighFrameRate = mPreferences.getString(
+                    CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
+                    getString(R.string.pref_camera_hfr_default));
+            if (HighFrameRate == null || "off".equals(HighFrameRate )) {
+                mHfr = false;
+            } else {
+                mHfr = true;
+            }
+
+            //String prop = SystemProperties.get("persist.camera.hfr");
+            //Log.e(TAG, "updateUIforHFR: prop ="+prop);
+            //if (prop.length() > 0 ) {
+            //    if ("on".equals(prop)) {
+            //        mHfr = true;
+            //    } else if("off".equals(prop)){
+            //        mHfr = false;
+            //    }
+           // }
+
+            boolean zoom = mParameters.isZoomSupported();
+            Log.v(TAG, "updateUIforHFR mHfr="+ mHfr+" zoom supported=" +zoom);
+            int zoomVisibility;
+            if (mHfr ) {
+                mIndicatorControlContainer.overrideSettings(
+                        CameraSettings.KEY_AUDIO_ENCODER,   null);
+                zoomVisibility = View.INVISIBLE;
+                zoom = false;
+            } else {
+                mIndicatorControlContainer.overrideSettings(
+                        CameraSettings.KEY_AUDIO_ENCODER,
+                        mPreferences.getString(
+                           CameraSettings.KEY_AUDIO_ENCODER,
+                           getString(R.string.pref_camera_audioencoder_default)));
+
+                if (zoom) {
+                    zoomVisibility = View.VISIBLE;
+                } else {
+                    zoomVisibility = View.INVISIBLE;
+                }
+            }
+
+            if (mZoomControl != null) {
+                mZoomControl.setVisibility(zoomVisibility);
+                mZoomControl.setEnabled(zoom);
+            }
+        }
+    }
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
@@ -2576,6 +2631,7 @@ public class VideoCamera extends ActivityBase
 
 
             }
+            updateUIforHFR( );
         }
     }
 

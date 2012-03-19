@@ -128,6 +128,13 @@ public class OtherSettingsPopup extends AbstractSettingPopup
                     InLineSettingItem settingItem =
                             (InLineSettingItem) mSettingList.getChildAt(j);
                     settingItem.overrideSettings(value);
+                    if (value == null) {
+                        settingItem.setEnabled(false);
+                        settingItem.setVisibility(View.GONE);
+                    } else {
+                        settingItem.setEnabled(true);
+                        settingItem.setVisibility(View.VISIBLE);
+                    }
                 }
             }
         }
