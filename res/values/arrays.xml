@@ -715,14 +715,25 @@
 
     <!-- HDR AE_bracketing dialog box entries -->
     <string-array name="pref_camera_hdr_entries" translatable="false">
-    <item>@string/pref_camera_ae_bracket_hdr_entry_off</item>
-    <item>@string/pref_camera_ae_bracket_hdr_entry_hdr</item>
-    <item>@string/pref_camera_ae_bracket_hdr_entry_ae_bracket</item>
+        <item>@string/pref_camera_ae_bracket_hdr_entry_off</item>
+        <item>@string/pref_camera_ae_bracket_hdr_entry_hdr</item>
+        <item>@string/pref_camera_ae_bracket_hdr_entry_ae_bracket</item>
     </string-array>
 
     <string-array name="pref_camera_hdr_entryvalues" translatable="false">
-    <item>@string/pref_camera_ae_bracket_hdr_value_off</item>
-    <item>@string/pref_camera_ae_bracket_hdr_value_hdr</item>
-    <item>@string/pref_camera_ae_bracket_hdr_value_ae_bracket</item>
+        <item>@string/pref_camera_ae_bracket_hdr_value_off</item>
+        <item>@string/pref_camera_ae_bracket_hdr_value_hdr</item>
+        <item>@string/pref_camera_ae_bracket_hdr_value_ae_bracket</item>
+    </string-array>
+
+    <!-- Camera Preferences Power Mode dialog box entries -->
+    <string-array name="pref_camera_powermode_entries" translatable="false">
+        <item>@string/pref_camera_powermode_entry_lp</item>
+        <item>@string/pref_camera_powermode_entry_np</item>
+    </string-array>
+
+    <string-array name="pref_camera_powermode_entryvalues" translatable="false">
+        <item>@string/pref_camera_powermode_value_lp</item>
+        <item>@string/pref_camera_powermode_value_np</item>
     </string-array>
 </resources>
