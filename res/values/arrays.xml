@@ -37,12 +37,12 @@
         <item>5</item>
         <!-- The integer value of CamcorderProfile.QUALITY_480P -->
         <item>4</item>
-        <item>7</item>
         <item>8</item>
         <item>9</item>
         <item>10</item>
-        <item>@string/pref_video_quality_default</item>
         <item>11</item>
+        <item>@string/pref_video_quality_default</item>
+        <item>7</item>
         <item>2</item></string-array>
 
     <array name="video_quality_largeicons" translatable="false">
