@@ -2266,8 +2266,10 @@ public class VideoCamera extends ActivityBase
         else
             mParameters.setPreviewSize(videoWidth, videoHeight);
         String recordSize = videoWidth + "x" + videoHeight;
-        //To set the parameter KEY_VIDE_SIZE
+        //To set the parameter KEY_VIDEO_SIZE
         mParameters.set("video-size", recordSize);
+	mParameters.set("record-size", recordSize);
+	Log.i(TAG, "video-size "+recordSize);  
 
         mUnsupportedHFRVideoSize = false;
         mUnsupportedHFRVideoCodec = false;
