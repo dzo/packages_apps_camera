@@ -2396,23 +2396,21 @@ public class VideoCamera extends ActivityBase
             //    } else if("off".equals(prop)){
             //        mHfr = false;
             //    }
-           // }
+            //}
 
             boolean zoom = mParameters.isZoomSupported();
             Log.v(TAG, "updateUIforHFR mHfr="+ mHfr+" zoom supported=" +zoom);
             int zoomVisibility;
             if (mHfr ) {
-                mIndicatorControlContainer.overrideSettings(
-                        CameraSettings.KEY_AUDIO_ENCODER,   null);
+                mIndicatorControlContainer.enableItems(
+                    CameraSettings.KEY_AUDIO_ENCODER, "false");
+
                 zoomVisibility = View.INVISIBLE;
                 zoom = false;
             } else {
-                mIndicatorControlContainer.overrideSettings(
-                        CameraSettings.KEY_AUDIO_ENCODER,
-                        mPreferences.getString(
-                           CameraSettings.KEY_AUDIO_ENCODER,
-                           getString(R.string.pref_camera_audioencoder_default)));
 
+                mIndicatorControlContainer.enableItems(
+                    CameraSettings.KEY_AUDIO_ENCODER, "true");
                 if (zoom) {
                     zoomVisibility = View.VISIBLE;
                 } else {

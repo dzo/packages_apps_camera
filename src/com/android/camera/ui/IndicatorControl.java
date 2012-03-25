@@ -32,6 +32,7 @@ import android.widget.RelativeLayout;
 import java.util.ArrayList;
 
 import java.util.HashMap;
+import android.util.Log;
 
 /**
  * A view that contains camera setting indicators.
@@ -190,6 +191,18 @@ public abstract class IndicatorControl extends RelativeLayout implements
 
         for (AbstractIndicatorButton b: mIndicators) {
             b.overrideSettings(keyvalues);
+        }
+    }
+
+
+    // Scene mode may override other camera settings (ex: flash mode).
+    public void enableItems(final String ... keyvalues) {
+        if (keyvalues.length % 2 != 0) {
+            throw new IllegalArgumentException();
+        }
+
+        for (AbstractIndicatorButton b: mIndicators) {
+            b.enableItems(keyvalues);
         }
     }
 

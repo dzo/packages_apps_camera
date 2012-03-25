@@ -33,6 +33,7 @@ import android.widget.ArrayAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
+import android.util.Log;
 
 /* A popup window that contains several camera settings. */
 public class OtherSettingsPopup extends AbstractSettingPopup
@@ -128,17 +129,34 @@ public class OtherSettingsPopup extends AbstractSettingPopup
                     InLineSettingItem settingItem =
                             (InLineSettingItem) mSettingList.getChildAt(j);
                     settingItem.overrideSettings(value);
-                    if (value == null) {
-                        settingItem.setEnabled(false);
-                        settingItem.setVisibility(View.GONE);
-                    } else {
+                }
+            }
+        }
+    }
+
+        // Enable/Disable the items.
+    public void enableItems(final String ... keyvalues) {
+        int count = mSettingList.getChildCount();
+        for (int i = 0; i < keyvalues.length; i += 2) {
+            String key = keyvalues[i];
+            String value = keyvalues[i + 1];
+            for (int j = 0; j < count; j++) {
+                ListPreference pref = (ListPreference) mListItem.get(j);
+                if (pref != null && key.equals(pref.getKey())) {
+                    InLineSettingItem settingItem =
+                            (InLineSettingItem) mSettingList.getChildAt(j);
+                    if ("true".equals(value) || "TRUE".equals(value)) {
                         settingItem.setEnabled(true);
                         settingItem.setVisibility(View.VISIBLE);
+                    } else {
+                        settingItem.setEnabled(false);
+                        settingItem.setVisibility(View.GONE);
                     }
                 }
             }
         }
     }
+
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position,
