@@ -70,6 +70,9 @@ public abstract class AbstractIndicatorButton extends RotateImageView implements
     // Scene mode may override other settings like flash, white-balance, and focus.
     abstract public void overrideSettings(final String ... keyvalues);
 
+
+    abstract public void enableItems(final String ... keyvalues);
+
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         if (!isEnabled()) return false;

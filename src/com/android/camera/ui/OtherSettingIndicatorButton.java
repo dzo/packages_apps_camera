@@ -22,6 +22,7 @@ import com.android.camera.R;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
+import android.util.Log;
 
 public class OtherSettingIndicatorButton extends AbstractIndicatorButton {
     private final String TAG = "OtherSettingIndicatorButton";
@@ -47,6 +48,14 @@ public class OtherSettingIndicatorButton extends AbstractIndicatorButton {
             initializePopup();
         }
         ((OtherSettingsPopup)mPopup).overrideSettings(keyvalues);
+    }
+
+    @Override
+    public void enableItems(final String ... keyvalues) {
+        if (mPopup == null) {
+            initializePopup();
+        }
+        ((OtherSettingsPopup)mPopup).enableItems(keyvalues);
     }
 
     @Override

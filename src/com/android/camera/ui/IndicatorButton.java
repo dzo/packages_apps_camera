@@ -98,6 +98,20 @@ public class IndicatorButton extends AbstractIndicatorButton
         reloadPreference();
     }
 
+
+    @Override
+    public void enableItems(final String ... keyvalues) {
+        Log.e(TAG, "Calling enableItems");
+        for (int i = 0; i < keyvalues.length; i += 2) {
+            String key = keyvalues[i];
+            String value = keyvalues[i + 1];
+            if (key.equals(getKey())) {
+                setEnabled(value == null);
+                break;
+            }
+        }
+    }
+
     @Override
     protected void initializePopup() {
         LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(
