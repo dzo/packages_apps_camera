@@ -143,7 +143,7 @@ public class FocusManager {
         if (!mInitialized) return;
 
         // Lock AE and AWB so users can half-press shutter and recompose.
-        if (mLockAeAwbNeeded && !mAeAwbLock) {
+        if (mLockAeAwbNeeded && !mAeAwbLock && !mZslEnabled) {
             mAeAwbLock = true;
             mListener.setFocusParameters();
         }
