@@ -44,8 +44,7 @@ public class ModePicker extends RelativeLayout implements View.OnClickListener,
 
     private static final String TAG = "ModePicker";
     // Total mode number
-//    private static final int MODE_NUM = 3;
-    private static final int MODE_NUM = 2;
+    private static final int MODE_NUM = 3;
 
     /** A callback to be called when the user wants to switch activity. */
     public interface OnModeChangeListener {
@@ -85,9 +84,8 @@ public class ModePicker extends RelativeLayout implements View.OnClickListener,
 
         mModeSelectionFrame = findViewById(R.id.mode_selection);
         mModeSelectionIcon = new RotateImageView[MODE_NUM];
-/*        mModeSelectionIcon[MODE_PANORAMA] =
+        mModeSelectionIcon[MODE_PANORAMA] =
                 (RotateImageView) findViewById(R.id.mode_panorama);
-*/
         mModeSelectionIcon[MODE_VIDEO] =
                 (RotateImageView) findViewById(R.id.mode_video);
         mModeSelectionIcon[MODE_CAMERA] =
@@ -99,7 +97,7 @@ public class ModePicker extends RelativeLayout implements View.OnClickListener,
             mCurrentModeIcon = new RotateImageView[MODE_NUM];
             mCurrentModeIcon[0] = (RotateImageView) findViewById(R.id.mode_0);
             mCurrentModeIcon[1] = (RotateImageView) findViewById(R.id.mode_1);
-//            mCurrentModeIcon[2] = (RotateImageView) findViewById(R.id.mode_2);
+            mCurrentModeIcon[2] = (RotateImageView) findViewById(R.id.mode_2);
         } else {
             // current_mode_bar is only for tablet.
             mCurrentModeBar = findViewById(R.id.current_mode_bar);

@@ -47,14 +47,13 @@
                     android:scaleType="center"
                     android:background="@drawable/bg_pressed"
                     android:src="@drawable/ic_switch_video_holo_light" />
-<!--            <com.android.camera.ui.RotateImageView android:id="@+id/mode_panorama"
+            <com.android.camera.ui.RotateImageView android:id="@+id/mode_panorama"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:scaleType="center"
                     android:background="@drawable/bg_pressed"
                     android:src="@drawable/ic_switch_pan_holo_light" />
--->
         </LinearLayout>
 </com.android.camera.ModePicker>
 
