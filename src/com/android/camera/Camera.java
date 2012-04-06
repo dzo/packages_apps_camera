@@ -3071,8 +3071,10 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                Log.e(TAG, "yyan Skin tone bar: enable = " + mskinToneValue);
                enableSkinToneSeekBar();
                //yyan: as a wrokaround set progress again to show the actually progress on screen.
-               progress = (skinToneValue/SCE_FACTOR_STEP)-MIN_SCE_FACTOR;
-               skinToneSeekBar.setProgress(progress);
+               if(skinToneValue != 0) {
+                   progress = (skinToneValue/SCE_FACTOR_STEP)-MIN_SCE_FACTOR;
+                   skinToneSeekBar.setProgress(progress);
+               }
                //mskinToneSeekListener.onProgressChanged(skinToneSeekBar,progress,true);
                //skinToneSeekBar.onProgressRefresh(1.0f, true);
           } else {
@@ -3115,8 +3117,12 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
          LeftValue.setVisibility(View.INVISIBLE);
          mskinToneValue = 0;
          mSkinToneSeekBar = false;
-        if(brightnessProgressBar != null)
-           brightnessProgressBar.setVisibility(View.VISIBLE);
+         Editor editor = mPreferences.edit();
+         editor.putString(CameraSettings.KEY_SKIN_TONE_ENHANCEMENT_FACTOR,
+                            Integer.toString(mskinToneValue - MIN_SCE_FACTOR));
+         editor.apply();
+         if(brightnessProgressBar != null)
+             brightnessProgressBar.setVisibility(View.VISIBLE);
     }
 }
 /*
