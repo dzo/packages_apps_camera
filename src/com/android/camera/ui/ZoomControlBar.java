@@ -23,6 +23,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.util.Log;
 
 /**
  * A view that contains camera zoom control and its layout.
@@ -100,6 +101,7 @@ public class ZoomControlBar extends ZoomControl {
                     // Make sure the movement is large enough before we start
                     // changing the zoom.
                     int delta = mSliderPosition - pos;
+                    Log.d(TAG, "mSliderPosition="+mSliderPosition+",THRESHOLD_FIRST_MOVE="+THRESHOLD_FIRST_MOVE);
                     if ((delta > THRESHOLD_FIRST_MOVE) ||
                             (delta < -THRESHOLD_FIRST_MOVE)) {
                         mStartChanging = true;
@@ -109,6 +111,8 @@ public class ZoomControlBar extends ZoomControl {
                     performZoom(1.0d * pos / mSliderLength);
                     mSliderPosition = pos;
                 }
+                //Log.d(TAG, "pos="+pos+", mStartChanging="+mStartChanging+", mSliderPosition="+mSliderPosition
+                //      +",mSliderLength="+mSliderLength);
                 requestLayout();
         }
         return true;
@@ -152,8 +156,10 @@ public class ZoomControlBar extends ZoomControl {
 
     @Override
     public void setZoomIndex(int index) {
+        Log.d(TAG, "setZoomIndex: "+index+", mSliderPosition=" +mSliderPosition+" change to -1");
         super.setZoomIndex(index);
-        mSliderPosition = -1; // -1 means invalid
+        mSliderPosition = (int) ((double) mSliderLength * mZoomIndex / mZoomMax);
+        //mSliderPosition = -1; // -1 means invalid
         requestLayout();
     }
 }
