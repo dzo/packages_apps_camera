@@ -1474,13 +1474,16 @@ public class VideoCamera extends ActivityBase
         // Unlock the camera object before passing it to media recorder.
         mCameraDevice.unlock();
         mMediaRecorder.setCamera(mCameraDevice);
-        if (!mCaptureTimeLapse) {
-            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
-        }
+
         String hfr = mParameters.getVideoHighFrameRate();
+        if (!mCaptureTimeLapse && ((hfr == null) || ("off".equals(hfr)))) {
+            mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+            mProfile.audioCodec = mAudioEncoder;
+        } else {
+            mProfile.audioCodec = -1; //not set
+        }
         mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
 
-        mProfile.audioCodec = mAudioEncoder;
         mProfile.videoCodec = mVideoEncoder;
         mProfile.duration = mMaxVideoDurationInMs;
 
