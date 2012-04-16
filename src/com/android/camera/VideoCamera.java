@@ -2210,75 +2210,56 @@ public class VideoCamera extends ActivityBase
         mParameters.setPreviewSize(mDesiredPreviewWidth, mDesiredPreviewHeight);
         mParameters.setPreviewFrameRate(mProfile.videoFrameRate);
 
-        videoWidth = mProfile.videoFrameWidth;
+	videoWidth = mProfile.videoFrameWidth;
         videoHeight = mProfile.videoFrameHeight;
         String recordSize = videoWidth + "x" + videoHeight;
         //To set the parameter KEY_VIDE_SIZE
         mParameters.set("video-size", recordSize);
 
-        // Set jpeg thumbnail size according preview aspect ratio. For camcorder preview size = record size.
-        // For Livesnapshot the thumbnail size should have same aspect ratio as the preview/video size.
-
-        List<Size> thumbnail_sizes = mParameters.getSupportedJpegThumbnailSizes();
-        Size currThumbnailSize = mParameters.getJpegThumbnailSize();
-
-        /* Get recommended thumbnail sizes based on aspect ratio */
-        int mAspectRatio = (int)((mDesiredPreviewWidth * 4096) / mDesiredPreviewHeight);
-        int mTempAspectRatio;
-        for (Size s : thumbnail_sizes) {
-            mTempAspectRatio = (int) ((s.width * 4096) / s.height);
-            if(mTempAspectRatio == mAspectRatio
-              && ((mDesiredPreviewWidth >= s.width) && (mDesiredPreviewHeight >= s.height)) )
-            {
-                mParameters.setJpegThumbnailSize(s.width, s.height);
-                break;
-            }
-        }
-
         mUnsupportedHFRVideoSize = false;
         mUnsupportedHFRVideoCodec = false;
-        // To set preview format as YV12 , run command
-        // "adb shell setprop "debug.camera.yv12" true"
-        String yv12formatset = SystemProperties.get("debug.camera.yv12");
-        if(yv12formatset.equals("true")) {
-            Log.v(TAG, "preview format set to YV12");
-            mParameters.setPreviewFormat (ImageFormat.YV12);
-        }
+      // To set preview format as YV12 , run command
+      // "adb shell setprop "debug.camera.yv12" true"
+       String yv12formatset = SystemProperties.get("debug.camera.yv12");
+       if(yv12formatset.equals("true")) {
+        Log.v(TAG, "preview format set to YV12");
+        mParameters.setPreviewFormat (ImageFormat.YV12);
+       }
 
         // Set High Frame Rate.
         String HighFrameRate = mPreferences.getString(
                 CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
                 getString(R.string.pref_camera_hfr_default));
         if(!("off".equals(HighFrameRate))){
-            mUnsupportedHFRVideoSize = true;
-            String hfrsize = videoWidth+"x"+videoHeight;
-            Log.v(TAG, "current set resolution is : "+hfrsize);
-            try {
-                for(Size size :  mParameters.getSupportedHfrSizes()){
-                    if(size != null) {
-                        Log.v(TAG, "supported hfr size : "+ size.width+ " "+size.height);
-                        if(videoWidth == size.width && videoHeight == size.height) {
-                            mUnsupportedHFRVideoSize = false;
-                            Log.v(TAG,"Current hfr resolution is supported");
-                            break;
-                        }
-                    }
-                }
-            } catch (NullPointerException e){
-                Log.e(TAG, "supported hfr sizes is null");
-            }
+           mUnsupportedHFRVideoSize = true;
+           String hfrsize = videoWidth+"x"+videoHeight;
+           Log.v(TAG, "current set resolution is : "+hfrsize);
+           try {
+               for(Size size :  mParameters.getSupportedHfrSizes()){
+                  if(size != null) {
+                      Log.v(TAG, "supported hfr size : "+ size.width+ " "+size.height);
+                      if(videoWidth == size.width && videoHeight == size.height) {
+                          mUnsupportedHFRVideoSize = false;
+                          Log.v(TAG,"Current hfr resolution is supported");
+                          break;
+                      }
+                  }
+              }
+           } catch (NullPointerException e){
+               Log.e(TAG, "supported hfr sizes is null");
+           }
 
-            if(mUnsupportedHFRVideoSize)
-                Log.e(TAG,"Unsupported hfr resolution");
-            if(mVideoEncoder != MediaRecorder.VideoEncoder.H264){
-                mUnsupportedHFRVideoCodec = true;
-            }
-        }
-        if (isSupported(HighFrameRate,
-                    mParameters.getSupportedVideoHighFrameRateModes())) {
+           if(mUnsupportedHFRVideoSize)
+               Log.e(TAG,"Unsupported hfr resolution");
+           if(mVideoEncoder != MediaRecorder.VideoEncoder.H264){
+               mUnsupportedHFRVideoCodec = true;
+           }
+       }
+       if (isSupported(HighFrameRate,
+                mParameters.getSupportedVideoHighFrameRateModes())) {
             mParameters.setVideoHighFrameRate(HighFrameRate);
 
-        }
+       }
 
         // Set flash mode.
         String flashMode = mPreferences.getString(
@@ -2300,7 +2281,7 @@ public class VideoCamera extends ActivityBase
                 CameraSettings.KEY_WHITE_BALANCE,
                 getString(R.string.pref_camera_whitebalance_default));
         if (isSupported(whiteBalance,
-                    mParameters.getSupportedWhiteBalance())) {
+                mParameters.getSupportedWhiteBalance())) {
             mParameters.setWhiteBalance(whiteBalance);
         } else {
             whiteBalance = mParameters.getWhiteBalance();
@@ -2340,7 +2321,7 @@ public class VideoCamera extends ActivityBase
         if (!original.equals(optimalSize)) {
             mParameters.setPictureSize(optimalSize.width, optimalSize.height);
         }
-        Log.e(TAG, "Video snapshot size is " + optimalSize.width + "x" +
+        Log.v(TAG, "Video snapshot size is " + optimalSize.width + "x" +
                 optimalSize.height);
 
         // Set JPEG quality.
