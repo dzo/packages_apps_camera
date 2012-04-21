@@ -588,6 +588,9 @@
     <!-- Toast telling users video snapshot is disabled when the effects are on and a user tries to tap on the viewfinder [CHAR LIMIT=65] -->
     <string name="disable_video_snapshot_hint">Video snapshot is disabled when special effects are on.</string>
 
+    <!-- Toast showing error if invalid size selected for  time lapse  [CHAR LIMIT=65] -->
+    <string name="time_lapse_error">Invalid video-size for time-lapse recording.</string>
+
     <!-- A button in effect setting popup to clear the effect. [CHAR LIMIT=26] -->
     <string name="clear_effects">Clear effects</string>
 
