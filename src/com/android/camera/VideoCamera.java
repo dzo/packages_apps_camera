@@ -1000,7 +1000,8 @@ public class VideoCamera extends ActivityBase
 
         mCaptureTimeLapse = (mTimeBetweenTimeLapseFrameCaptureMs != 0);
         // TODO: This should be checked instead directly +1000.
-        if (mCaptureTimeLapse) quality += 1000;
+        if (mCaptureTimeLapse) quality = 1005;
+
         mProfile = CamcorderProfile.get(mCameraId, quality);
         getDesiredPreviewSize();
 
