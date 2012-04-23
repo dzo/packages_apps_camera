@@ -1031,17 +1031,9 @@ public class VideoCamera extends ActivityBase
 
         mCaptureTimeLapse = (mTimeBetweenTimeLapseFrameCaptureMs != 0);
         // TODO: This should be checked instead directly +1000.
-        if (mCaptureTimeLapse) quality += 1000;
-        //Time lapse is not supported for all video sizes
-        try {
-            mProfile = CamcorderProfile.get(mCameraId, quality);
-        } catch (IllegalArgumentException e){
-            Log.e(TAG, e.toString());
-            new RotateTextToast(this, R.string.time_lapse_error, mOrientation).show();
-            mCaptureTimeLapse = false;
-            quality -= 1000;
-            mProfile = CamcorderProfile.get(mCameraId, quality);
-        }
+        if (mCaptureTimeLapse) quality = 1005;
+
+        mProfile = CamcorderProfile.get(mCameraId, quality);
         getDesiredPreviewSize();
 
         if(mParameters.isPowerModeSupported()) {
