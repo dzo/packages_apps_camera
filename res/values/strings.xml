@@ -343,7 +343,7 @@
     <string name="pref_camera_saturation_title">Saturation</string>
 
     <!-- Default scene mode setting. -->
-    <string name="pref_camera_scenemode_default" translatable="false">Auto</string>
+    <string name="pref_camera_scenemode_default" translatable="false">auto</string>
 
     <!-- Settings screen, Select Scene mode -->
     <string name="pref_camera_scenemode_title">Scene mode</string>
