@@ -74,6 +74,16 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import android.graphics.PixelFormat;
+import android.graphics.PorterDuffXfermode;
+import android.graphics.PorterDuff;
+import android.graphics.Paint;
+import android.graphics.Color;
+import android.graphics.Canvas;
+import android.graphics.Rect;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -100,6 +110,12 @@ public class VideoCamera extends ActivityBase
         EffectsRecorder.EffectsListener {
 
     private static final String TAG = "videocamera";
+
+    private Paint mRecordingTimePainter =  new Paint();
+    private Paint mRecordingTimeUnPainter =  new Paint();
+    private RecordingTimerOverlayHandler mRecordingTimerOverlayHandler =
+                                            new RecordingTimerOverlayHandler();
+    private String oldTimerText = "";
 
     private static final String[] OTHER_SETTING_KEYS = {
                     CameraSettings.KEY_RECORD_LOCATION,
@@ -243,7 +259,8 @@ public class VideoCamera extends ActivityBase
     private Rotatable mReviewPlayButton;
     private ModePicker mModePicker;
     private ShutterButton mShutterButton;
-    private TextView mRecordingTimeView;
+    private SurfaceView mRecordingTimerView;
+
     private RotateLayout mBgLearningMessageRotater;
     private View mBgLearningMessageFrame;
     private LinearLayout mLabelsLinearLayout;
@@ -567,6 +584,14 @@ public class VideoCamera extends ActivityBase
         requestWindowFeature(Window.FEATURE_PROGRESS);
         mIsVideoCaptureIntent = isVideoCaptureIntent();
         setContentView(R.layout.video_camera);
+
+        mRecordingTimerView = (SurfaceView) findViewById(R.id.recording_timer_overlay);
+        SurfaceHolder recordingTimerHolder = mRecordingTimerView.getHolder();
+        mRecordingTimerOverlayHandler.setRecordingTimerSurfaceHolder(recordingTimerHolder);
+        recordingTimerHolder.addCallback(mRecordingTimerOverlayHandler);
+        mRecordingTimerView.setZOrderMediaOverlay(true);
+        mRecordingTimerView.setVisibility(View.GONE);
+
         if (mIsVideoCaptureIntent) {
             mReviewDoneButton = (Rotatable) findViewById(R.id.btn_done);
             mReviewPlayButton = (Rotatable) findViewById(R.id.btn_play);
@@ -610,7 +635,6 @@ public class VideoCamera extends ActivityBase
             mShutterButton.setEnabled(false);
         }
 
-        mRecordingTimeView = (TextView) findViewById(R.id.recording_time);
         mRecordingTimeRect = (RotateLayout) findViewById(R.id.recording_time_rect);
         mOrientationListener = new MyOrientationEventListener(this);
         mTimeLapseLabel = findViewById(R.id.time_lapse_label);
@@ -645,6 +669,13 @@ public class VideoCamera extends ActivityBase
         mFrontCameraId = CameraHolder.instance().getFrontCameraId();
 
         initializeIndicatorControl();
+
+        mRecordingTimePainter.setColor(getResources().getColor(R.color.recording_time_elapsed_text));
+        mRecordingTimePainter.setStrokeWidth(1);
+        mRecordingTimePainter.setTextSize(24);
+        mRecordingTimeUnPainter.setColor(Color.TRANSPARENT);
+        mRecordingTimeUnPainter.setXfermode(new PorterDuffXfermode(PorterDuff.Mode.CLEAR));
+        mRecordingTimeUnPainter.setStrokeWidth(1);
     }
 
     private void loadCameraPreferences() {
@@ -1936,6 +1967,7 @@ public class VideoCamera extends ActivityBase
         mMediaRecorderRecording = true;
         mRecordingStartTime = SystemClock.uptimeMillis();
         showRecordingUI(true);
+        mRecordingTimerView.postInvalidate();
 
         updateRecordingTime();
         keepScreenOn();
@@ -1946,8 +1978,7 @@ public class VideoCamera extends ActivityBase
             mIndicatorControlContainer.dismissSecondLevelIndicator();
             if (mThumbnailView != null) mThumbnailView.setEnabled(false);
             mShutterButton.setBackgroundResource(R.drawable.btn_shutter_video_recording);
-            mRecordingTimeView.setText("");
-            mRecordingTimeView.setVisibility(View.VISIBLE);
+            mRecordingTimerView.setVisibility(View.VISIBLE);
             if (mReviewControl != null) mReviewControl.setVisibility(View.GONE);
             if (mCaptureTimeLapse) {
                 if (Util.isTabletUI()) {
@@ -1960,7 +1991,7 @@ public class VideoCamera extends ActivityBase
         } else {
             if (mThumbnailView != null) mThumbnailView.setEnabled(true);
             mShutterButton.setBackgroundResource(R.drawable.btn_shutter_video);
-            mRecordingTimeView.setVisibility(View.GONE);
+            mRecordingTimerView.setVisibility(View.GONE);
             if (mReviewControl != null) mReviewControl.setVisibility(View.VISIBLE);
             if (mCaptureTimeLapse) {
                 if (Util.isTabletUI()) {
@@ -2193,18 +2224,37 @@ public class VideoCamera extends ActivityBase
             targetNextUpdateDelay = mTimeBetweenTimeLapseFrameCaptureMs;
         }
 
-        mRecordingTimeView.setText(text);
-
-        if (mRecordingTimeCountsDown != countdownRemainingTime) {
-            // Avoid setting the color on every update, do it only
-            // when it needs changing.
-            mRecordingTimeCountsDown = countdownRemainingTime;
-
-            int color = getResources().getColor(countdownRemainingTime
+        int textColor = getResources().getColor(countdownRemainingTime
                     ? R.color.recording_time_remaining_text
                     : R.color.recording_time_elapsed_text);
 
-            mRecordingTimeView.setTextColor(color);
+        if (mRecordingTimerView != null) {
+            Log.v(TAG, "Got R.id.recording_timer_overlay");
+            Canvas recordingTimerCanvas =
+            mRecordingTimerOverlayHandler.getRecordingTimerSurfaceHolder().lockCanvas();
+ 
+            if (recordingTimerCanvas != null) {
+                if (oldTimerText.length() > 0) {
+                    // There is a saved old timer text value.
+                    // Lets paint it in transparent.
+                    //mRecordingTimeUnPainter.setStyle(Paint.Style.FILL);
+                    //recordingTimerCanvas.drawText(oldTimerText, 10, 80, mRecordingTimeUnPainter);
+                    recordingTimerCanvas.drawRect(0, 0, 150, 150, mRecordingTimeUnPainter);
+                    mRecordingTimerView.postInvalidate();
+                    Log.v(TAG, "Undrawing text.");
+                }
+ 
+                mRecordingTimerView.postInvalidate();
+                mRecordingTimePainter.setColor(textColor);
+                //mRecordingTimePainter.setXfermode(null);
+                Bitmap mybit = BitmapFactory.decodeResource(getResources(), R.drawable.ic_recording_indicator);
+                recordingTimerCanvas.drawBitmap(mybit, 10, 0, null);
+                recordingTimerCanvas.drawText(text, 10, 80, mRecordingTimePainter);
+                oldTimerText = text;
+                mRecordingTimerOverlayHandler.getRecordingTimerSurfaceHolder().unlockCanvasAndPost(recordingTimerCanvas);
+                mRecordingTimerView.postInvalidate();
+                Log.v(TAG, "Drawing textgfg. " + text);
+            }
         }
 
         long actualNextUpdateDelay = targetNextUpdateDelay - (delta % targetNextUpdateDelay);
@@ -2222,7 +2272,7 @@ public class VideoCamera extends ActivityBase
         mParameters.setPreviewSize(mDesiredPreviewWidth, mDesiredPreviewHeight);
         mParameters.setPreviewFrameRate(mProfile.videoFrameRate);
 
-	videoWidth = mProfile.videoFrameWidth;
+        videoWidth = mProfile.videoFrameWidth;
         videoHeight = mProfile.videoFrameHeight;
         String recordSize = videoWidth + "x" + videoHeight;
         //To set the parameter KEY_VIDE_SIZE
@@ -2981,6 +3031,38 @@ public class VideoCamera extends ActivityBase
         }else if(msgId == SHOW_LOWPOWER_MODE) {
             new RotateTextToast(this, R.string.snapshotsize_low_powermode,
                                 mOrientation).show();
+        }
+    }
+
+    class RecordingTimerOverlayHandler implements SurfaceHolder.Callback {
+        private SurfaceHolder mRecordingTimerSurfaceHolder;
+        public final String TAG = "RecordingTimerOverlayHandler";
+
+        @Override
+        public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+            mRecordingTimerSurfaceHolder = holder;
+            mRecordingTimerSurfaceHolder.setFormat(PixelFormat.TRANSPARENT);
+            Log.i(TAG, "Surface changed: width: " + width + " height: " + height);
+        }
+
+        @Override
+        public void surfaceCreated(SurfaceHolder holder) {
+            mRecordingTimerSurfaceHolder = holder;
+            Log.i(TAG, "Surface created");
+        }
+
+        @Override
+        public void surfaceDestroyed(SurfaceHolder holder) {
+            mRecordingTimerSurfaceHolder = null;
+            Log.i(TAG, "Surface destroyed");
+        }
+
+        public SurfaceHolder getRecordingTimerSurfaceHolder() {
+            return mRecordingTimerSurfaceHolder;
+        }
+
+        public void setRecordingTimerSurfaceHolder(SurfaceHolder surfaceHolder) {
+            mRecordingTimerSurfaceHolder = surfaceHolder;
         }
     }
 }

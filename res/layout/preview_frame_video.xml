@@ -26,6 +26,9 @@
         <SurfaceView android:id="@+id/camera_preview"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent" />
+        <SurfaceView android:id="@+id/recording_timer_overlay"
+                android:layout_width="150dp"
+                android:layout_height="150dp" />
         <FrameLayout android:id="@+id/preview_border"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
