@@ -1059,7 +1059,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                 LeftValue.setText("");
                 RightValue.setText("");
             }
-            if(value != mskinToneValue) {
+            if(value != mskinToneValue && mCameraDevice != null) {
                 mskinToneValue = value;
                 mParameters = mCameraDevice.getParameters();
                 mParameters.set("skinToneEnhancement", String.valueOf(mskinToneValue));
