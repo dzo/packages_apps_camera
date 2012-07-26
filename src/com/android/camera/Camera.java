@@ -2043,7 +2043,7 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                         onShutterButtonClick();
                     }
                     return true;
-                case KeyEvent.KEYCODE_DPAD_LEFT:
+                case KeyEvent.KEYCODE_VOLUME_DOWN:
                     if ( (mCameraState != PREVIEW_STOPPED) &&
                             (mFocusManager.getCurrentFocusState() != mFocusManager.STATE_FOCUSING) &&
                             (mFocusManager.getCurrentFocusState() != mFocusManager.STATE_FOCUSING_SNAP_ON_FINISH) ) {
@@ -2060,8 +2060,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                         brightnessProgressBar.setVisibility(View.VISIBLE);
 
                     }
-                    break;
-                case KeyEvent.KEYCODE_DPAD_RIGHT:
+                    return true;
+                case KeyEvent.KEYCODE_VOLUME_UP:
                     if ( (mCameraState != PREVIEW_STOPPED) &&
                             (mFocusManager.getCurrentFocusState() != mFocusManager.STATE_FOCUSING) &&
                             (mFocusManager.getCurrentFocusState() != mFocusManager.STATE_FOCUSING_SNAP_ON_FINISH) ) {
@@ -2078,7 +2078,8 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
                         brightnessProgressBar.setVisibility(View.VISIBLE);
 
                     }
-                    break;
+
+                    return true;
                 case KeyEvent.KEYCODE_DPAD_CENTER:
                     // If we get a dpad center event without any focused view, move
                     // the focus to the shutter button and press it.
@@ -2104,6 +2105,9 @@ public class Camera extends ActivityBase implements FocusManager.Listener,
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         switch (keyCode) {
+            case KeyEvent.KEYCODE_VOLUME_DOWN:
+            case KeyEvent.KEYCODE_VOLUME_UP:
+                return true;
             case KeyEvent.KEYCODE_FOCUS:
                 if (mFirstTimeInitialized) {
                     onShutterButtonFocus(false);

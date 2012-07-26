@@ -125,7 +125,8 @@ public class VideoCamera extends ActivityBase
                     CameraSettings.KEY_VIDEO_DURATION,
                     CameraSettings.KEY_COLOR_EFFECT,
                     CameraSettings.KEY_VIDEO_HIGH_FRAME_RATE,
-                    CameraSettings.KEY_POWER_MODE
+                    CameraSettings.KEY_FOCUS_MODE,
+                    CameraSettings.KEY_POWER_MODE,
         };
     public HashMap otherSettingKeys = new HashMap(2);
 
@@ -2345,8 +2346,10 @@ public class VideoCamera extends ActivityBase
         // Set continuous autofocus.
         List<String> supportedFocus = mParameters.getSupportedFocusModes();
         if (isSupported(Parameters.FOCUS_MODE_CONTINUOUS_VIDEO, supportedFocus)) {
-            mParameters.setFocusMode(Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
+//            mParameters.setFocusMode(Parameters.FOCUS_MODE_CONTINUOUS_VIDEO);
         }
+        mParameters.setFocusMode(Parameters.FOCUS_MODE_FIXED);
+	Log.i(TAG, " Focusmode =" +mParameters.getFocusMode());
 
         mParameters.setRecordingHint(true);
 
