@@ -55,6 +55,19 @@
             camera:entries="@array/camera_id_entries"
             camera:largeIcons="@array/camera_id_largeicons"/>
     <IconListPreference
+            camera:key="pref_camera_scenemode_key"
+            camera:defaultValue="@string/pref_camera_scenemode_default"
+            camera:title="@string/pref_camera_scenemode_title"
+            camera:singleIcon="@drawable/ic_scn_holo_light"
+            camera:entries="@array/pref_camera_scenemode_entries"
+            camera:entryValues="@array/pref_camera_scenemode_entryvalues" />
+        <ListPreference
+                camera:key="pref_camera_scenedetect_key"
+                camera:defaultValue="@string/pref_camera_scenedetect_default"
+                camera:title="@string/pref_camera_scenedetect_title"
+                camera:entries="@array/pref_camera_scenedetect_entries"
+                camera:entryValues="@array/pref_camera_scenedetect_entryvalues" />
+    <IconListPreference
             camera:key="pref_video_effect_key"
             camera:defaultValue="@string/pref_video_effect_default"
             camera:title="@string/pref_video_effect_title"

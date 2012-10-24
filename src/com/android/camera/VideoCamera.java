@@ -711,7 +711,8 @@ public class VideoCamera extends ActivityBase
         final String[] SETTING_KEYS = {
                     CameraSettings.KEY_VIDEOCAMERA_FLASH_MODE,
                     CameraSettings.KEY_WHITE_BALANCE,
-                    CameraSettings.KEY_VIDEO_EFFECT,
+                    CameraSettings.KEY_SCENE_MODE,
+//                    CameraSettings.KEY_VIDEO_EFFECT,
                     CameraSettings.KEY_VIDEO_TIME_LAPSE_FRAME_INTERVAL,
                     CameraSettings.KEY_VIDEO_QUALITY};
 
@@ -2388,6 +2389,13 @@ public class VideoCamera extends ActivityBase
         mParameters.setJpegQuality(jpegQuality);
 
 
+        String SceneMode = mPreferences.getString(
+                CameraSettings.KEY_SCENE_MODE,
+                getString(R.string.pref_camera_scenemode_default));
+        if (isSupported(SceneMode, mParameters.getSupportedSceneModes())) {
+                mParameters.setSceneMode(SceneMode);
+        }
+
         // Set color effect parameter.
         String colorEffect = mPreferences.getString(
                 CameraSettings.KEY_COLOR_EFFECT,
@@ -2396,6 +2404,7 @@ public class VideoCamera extends ActivityBase
         if (isSupported(colorEffect, mParameters.getSupportedColorEffects())) {
             mParameters.setColorEffect(colorEffect);
         }
+
 
         if(mParameters.isPowerModeSupported()) {
             String powermode = mPreferences.getString(
@@ -2416,6 +2425,7 @@ public class VideoCamera extends ActivityBase
         mCameraDevice.setParameters(mParameters);
         // Keep preview size up to date.
         mParameters = mCameraDevice.getParameters();
+        CameraSettings.dumpParameters(mParameters);
     }
 
     private boolean switchToOtherMode(int mode) {
